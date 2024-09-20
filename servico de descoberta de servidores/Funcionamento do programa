@@ -1,0 +1,38 @@
+Estrutura:
+- Servidor de Descoberta (Discovery Server):
+	Mantém um registro de servidores disponíveis.
+	Responde aos clientes com a lista de servidores registrados.
+- Servidor:
+	Registra-se no Discovery Server ao iniciar.
+	Responde a pedidos de clientes após a descoberta.
+- Cliente:
+	Se conecta ao Discovery Server para obter a lista de servidores.
+	Escolhe um servidor para se conectar e envia uma requisição
+	
+	
+Como funciona:
+
+1.Discovery Server:
+	- Fica rodando e aguardando servidores se registrarem ou clientes pedirem a lista de servidores.
+	- Um servidor se registra enviando a mensagem "REGISTER:Nome:IP".
+	- Um cliente pode pedir a lista de servidores enviando a mensagem "GET_SERVERS".
+2.Servidor:
+	- Quando o servidor é iniciado, ele se registra no Discovery Server com seu nome, IP e porta.
+	- O servidor também aceita conexões de clientes e responde com uma mensagem de boas-vindas.
+3.Cliente:
+	- O cliente se conecta ao Discovery Server e pede a lista de servidores.
+	- Ele pode escolher um servidor da lista e se conectar para receber uma resposta.
+	
+Como rodar:
+
+	1.Inicie o Discovery Server.
+	2.Inicie um ou mais Servidores, que irão se registrar no Discovery Server.
+	3.Inicie um Cliente, que irá descobrir os servidores disponíveis e se conectar a um deles.
+	
+Passos para Testar:
+	1.Crie três arquivos Python:
+		- Um para o Discovery Server. (discovery_server.py)
+  		- Outro para o Servidor. (server.py)
+		- E um último para o Cliente. (client.py)
+	
+	2. Inicie o Discovery Server, depois inicie um ou mais Servidores e por último inicie o Cliente (Lembrando que deve ser inicializando em terminais separados, tanto os servidores como o discovery e o cliente)
