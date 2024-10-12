@@ -3,7 +3,8 @@
 
 # **Serviço para gerenciamento de reservas de ingressos**
 
-# **1. VISÃO GERAL*
+# 1. VISÃO GERAL
+
 
 # **O serviço de gerenciamento de ingressos é um sistema back-end distribuído que fornece funcionalidades para a venda, reserva e gerenciamento de ingressos para eventos. Este sistema é projetado para operar em um ambiente não web, permitindo integração com aplicativos móveis ou sistemas de terceiros, utilizando princípios de sistemas distribuídos como escalabilidade, disponibilidade e tolerância a falhas.**
 
