@@ -58,112 +58,111 @@
 
 #   O sistema será implementado usando uma arquitetura de microserviços, permitindo que diferentes partes do sistema sejam desenvolvidas, implantadas e escaladas de forma independente.
 
-# **Principais Microserviços:**
+# Principais Microserviços:
 
-# *Eventos***: Gerenciamento de eventos.**
+# Eventos: Gerenciamento de eventos.
 
-# *Ingressos***: Venda e reserva de ingressos.**
+# Ingressos: Venda e reserva de ingressos.
 
-# *Usuários***: Autenticação e gestão de usuários.**
+# Usuários: Autenticação e gestão de usuários.
 
-# *Pagamentos***: Processamento de transações financeiras.**
+# Pagamentos: Processamento de transações financeiras.
 
-# *Relatórios***: Geração de relatórios analíticos.**
+# Relatórios: Geração de relatórios analíticos.
 
-# **3.1.2 COMUNICAÇÃO ENTRE MICROSSERVIÇOS**
+# 3.1.2 COMUNICAÇÃO ENTRE MICROSSERVIÇOS
 
-# *REST APIs***: Os microserviços se comunicarão através de APIs RESTful, proporcionando um interface padronizada para interações com aplicativos ou sistemas clientes.**
+# REST APIs: Os microserviços se comunicarão através de APIs RESTful, proporcionando um interface padronizada para interações com aplicativos ou sistemas clientes.
 
-# *Mensageria Assíncrona***: Utilização de sistemas de mensageria como RabbitMQ ou Apache Kafka para comunicação assíncrona, permitindo desacoplamento entre serviços e garantindo que as mensagens sejam entregues mesmo em caso de falhas temporárias.**
+# Mensageria Assíncrona: Utilização de sistemas de mensageria como RabbitMQ ou Apache Kafka para comunicação assíncrona, permitindo desacoplamento entre serviços e garantindo que as mensagens sejam entregues mesmo em caso de falhas temporárias.
 
-# **3.2 GESTÃO DE DADOS DISTRIBUÍDOS**
+# 3.2 GESTÃO DE DADOS DISTRIBUÍDOS
 
-# **3.2.1 BANCO DE DADOS**
+# 3.2.1 BANCO DE DADOS
 
-# *Banco de Dados Relacional***: PostgreSQL para dados estruturados.**
+# Banco de Dados Relacional: PostgreSQL para dados estruturados.
 
-# *Banco de Dados NoSQL***: MongoDB para flexibilidade e armazenamento de dados não estruturados.**
+# Banco de Dados NoSQL: MongoDB para flexibilidade e armazenamento de dados não estruturados.
 
-# **3.2.2 REPLICAÇÃO E CONSISTÊNCIA**
+# 3.2.2 REPLICAÇÃO E CONSISTÊNCIA
 
-# *Replicação de Dados***: Implementar replicação de banco de dados para garantir alta disponibilidade e recuperação de desastres.**
+# Replicação de Dados: Implementar replicação de banco de dados para garantir alta disponibilidade e recuperação de desastres.
 
-# *Consistência Eventual***: Aplicar princípios de consistência eventual em operações que podem tolerar latência, como a atualização de dados em serviços de relatórios.**
+# Consistência Eventual: Aplicar princípios de consistência eventual em operações que podem tolerar latência, como a atualização de dados em serviços de relatórios.
 
-# **3.3 ESCALABILIDADE E DESEMPENHO**
+# 3.3 ESCALABILIDADE E DESEMPENHO
 
-# **3.3.1 ESCALABILIDADE HORIZONTAL**	
+# 3.3.1 ESCALABILIDADE HORIZONTAL
 
-# *Containers***: Utilizar Docker para empacotar microserviços e Kubernetes para orquestração, facilitando a escalabilidade horizontal.**
+# Containers: Utilizar Docker para empacotar microserviços e Kubernetes para orquestração, facilitando a escalabilidade horizontal.
 
-# *Balanceamento de Carga***: Implementar balanceadores de carga para distribuir as solicitações entre instâncias de microserviços, garantindo que nenhuma instância fique sobrecarregada.**
+# Balanceamento de Carga: Implementar balanceadores de carga para distribuir as solicitações entre instâncias de microserviços, garantindo que nenhuma instância fique sobrecarregada.
 
-# **3.3.2 ESTRATÉGIAS EM CACHE**
+# 3.3.2 ESTRATÉGIAS EM CACHE
 
-# *Cache em Memória***: Utilizar Redis ou Memcached para armazenar dados frequentemente acessados, melhorando o desempenho e reduzindo a carga no banco de dados.**
+# Cache em Memória: Utilizar Redis ou Memcached para armazenar dados frequentemente acessados, melhorando o desempenho e reduzindo a carga no banco de dados.
 
-# **3.4 TOLERÂNCIA A FALHAS**
 
-# **3.4.1 MECANISMOS DE RECUPERAÇÃO**
+# 3.4 TOLERÂNCIA A FALHAS
 
-# *Circuit Breaker***: Implementar padrões como Circuit Breaker para evitar falhas em cascata entre microserviços.**
+# 3.4.1 MECANISMOS DE RECUPERAÇÃO
 
-# *Re-tentativas***: Utilizar lógica de re-tentativa em chamadas de serviços externos.**
+# Circuit Breaker: Implementar padrões como Circuit Breaker para evitar falhas em cascata entre microserviços.
 
-# **3.4.2 MONITORAMENTO E RESILIÊNCIA**
+# Re-tentativas: Utilizar lógica de re-tentativa em chamadas de serviços externos.
 
-# *Monitoramento Contínuo***: Utilizar Prometheus e Grafana para monitorar a saúde dos serviços, registrando métricas de desempenho e detectando anomalias.**
+# 3.4.2 MONITORAMENTO E RESILIÊNCIA
 
-# *Logging***: Implementar um sistema de logging centralizado usando ELK Stack (Elasticsearch, Logstash, Kibana) para facilitar a análise de logs.**
+# Monitoramento Contínuo: Utilizar Prometheus e Grafana para monitorar a saúde dos serviços, registrando métricas de desempenho e detectando anomalias.
 
-# **4\. *SEGURANÇA***
+# Logging: Implementar um sistema de logging centralizado usando ELK Stack (Elasticsearch, Logstash, Kibana) para facilitar a análise de logs.
 
-# **4.1 AUTENTICAÇÃO E AUTORIZAÇÃO**
+# 4\. *SEGURANÇA
 
-# **Implementar autenticação baseada em JWT, garantindo que cada microserviço valide tokens para acesso seguro.**
+# 4.1 AUTENTICAÇÃO E AUTORIZAÇÃO
 
-# **4.2 PROTEÇÃO DE DADOS**
+# Implementar autenticação baseada em JWT, garantindo que cada microserviço valide tokens para acesso seguro.
 
-# *Comunicação Segura***: Utilizar HTTPS para todas as comunicações entre serviços e com clientes.**
+# 4.2 PROTEÇÃO DE DADOS
 
-# *Criptografia de Dados Sensíveis***: Proteger informações sensíveis, como senhas e dados de pagamento, com criptografia forte.**
+# Comunicação Segura: Utilizar HTTPS para todas as comunicações entre serviços e com clientes.
 
-# **5\. *TESTES***
+# Criptografia de Dados Sensíveis: Proteger informações sensíveis, como senhas e dados de pagamento, com criptografia forte.
 
-# **5.1 ESTRATÉGIAS DE TESTES**
+# 5\. TESTES
 
-# *Testes Unitários***: Cobrir cada microserviço com testes unitários para garantir a funcionalidade correta.**
+# 5.1 ESTRATÉGIAS DE TESTES
 
-# *Testes de Integração***: Validar a interação entre microserviços.**
+# Testes Unitários: Cobrir cada microserviço com testes unitários para garantir a funcionalidade correta.
 
-# *Testes de Performance***: Avaliar o desempenho do sistema sob carga.**
+# Testes de Integração: Validar a interação entre microserviços.
 
-# **5.2 FERRAMENTAS DE TESTE**
+# Testes de Performance: Avaliar o desempenho do sistema sob carga.
 
-# *Testes Unitários***: Pytest (Python) ou Jest (Node.js).**	
+# 5.2 FERRAMENTAS DE TESTE
 
-# *Testes de Integração***: Postman ou Insomnia.**
+# Testes Unitários: Pytest (Python) ou Jest (Node.js).
 
-# *Testes de Performance***: JMeter ou Locust.**
+# Testes de Integração: Postman ou Insomnia.
 
-# **6\. *MANUTENÇÃO***
+# Testes de Performance: JMeter ou Locust.
 
-# **6.1 MONITORAMENTO CONTÍNUO**
+# 6\. MANUTENÇÃO
 
-# **Implementar um ciclo de feedback contínuo para identificar áreas de melhoria com base em dados de uso e desempenho.**
+# 6.1 MONITORAMENTO CONTÍNUO
 
-# **6.2 ATUALIZAÇÕES E MELHORIAS**
+# Implementar um ciclo de feedback contínuo para identificar áreas de melhoria com base em dados de uso e desempenho.
 
-# **Atualizações regulares do sistema e implementação de novas funcionalidades conforme necessário.**
+# 6.2 ATUALIZAÇÕES E MELHORIAS
 
-# 
-
-# **7\. *CONCLUSÃO***
-
-# **Este projeto de sistema distribuído visa criar uma plataforma robusta para gerenciamento de ingressos que não apenas atenda às necessidades dos organizadores de eventos e consumidores, mas também seja escalável, resiliente e fácil de manter. Ao aplicar princípios de sistemas distribuídos, garantimos que o sistema será capaz de evoluir e se adaptar às mudanças no mercado.**
+# Atualizações regulares do sistema e implementação de novas funcionalidades conforme necessário.**
 
 # 
 
-.
+# 7\. *CONCLUSÃO
+
+# Este projeto de sistema distribuído visa criar uma plataforma robusta para gerenciamento de ingressos que não apenas atenda às necessidades dos organizadores de eventos e consumidores, mas também seja escalável, resiliente e fácil de manter. Ao aplicar princípios de sistemas distribuídos, garantimos que o sistema será capaz de evoluir e se adaptar às mudanças no mercado.
+
+# 
 
 [image1]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAnAAAAAICAYAAAB5/cImAAAARUlEQVR4Xu3WMQ0AIADAMFziCFGYgx8FLOnRZwo25l4HAICO8QYAAP5m4AAAYgwcAECMgQMAiDFwAAAxBg4AIMbAAQDEXBexb+/rxtwtAAAAAElFTkSuQmCC>
