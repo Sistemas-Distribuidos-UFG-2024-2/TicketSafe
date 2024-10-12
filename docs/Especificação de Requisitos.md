@@ -20,7 +20,7 @@ O objetivo do sistema é oferecer uma plataforma eficiente e escalável para ven
 
 #### 2.2 *Escopo*
 
-	O sistema oferece as seguintes funcionalidades principais:
+O sistema oferece as seguintes funcionalidades principais:
 
 * Venda de ingressos para eventos (concertos, shows, teatros, esportes, etc.).  
 * Reserva de ingressos para diferentes categorias de usuários.  
