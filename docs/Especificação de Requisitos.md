@@ -100,11 +100,11 @@ O sistema será construído com uma arquitetura de microsserviços, utilizando t
 * **RNF009**: O sistema deve suportar pelo menos 10.000 usuários simultâneos.  
 * **RNF010**: O tempo de resposta para a compra de ingressos deve ser inferior a 2 segundos.
 
-	5.6 *Usabilidade*
+5.6 *Usabilidade*
 
 * **RNF011**: A interface do usuário deve ser intuitiva e responsiva, proporcionando uma boa experiência para os usuários.
 
-	5.7 *Manutenção*
+5.7 *Manutenção*
 
 * **RNF012**: O sistema deve ser projetado para facilitar a manutenção, permitindo que atualizações e modificações sejam realizadas de maneira eficiente e sem causar interrupções significativas nas operações.
 
@@ -145,15 +145,15 @@ O sistema será construído com uma arquitetura de microsserviços, utilizando t
 * O sistema implementará backups distribuídos de dados críticos (transações, ingressos, informações de usuários) utilizando soluções como **Amazon S3 Glacier** ou **Ceph**.  
 * Snapshots regulares serão realizados e replicados em várias regiões para garantir a recuperação rápida em caso de falhas.
 
-	6.7 *Balanceamento de Carga*
+6.7 *Balanceamento de Carga*
 
 * O sistema utilizará algoritmos de balanceamento de carga, como **Round Robin** ou **Least Connections**, para distribuir requisições entre servidores, garantindo que o sistema suporte alta demanda.
 
-	6.8 *Replicação de Dados*
+6.8 *Replicação de Dados*
 
 * O sistema implementará replicação de dados em um banco de dados distribuído, como **MongoDB** ou **Cassandra**, garantindo alta disponibilidade e resiliência.
 
-	6.9 *Criptografia*
+6.9 *Criptografia*
 
 * O sistema implementará criptografia **AES** para proteger dados sensíveis e usará **HTTPS** para garantir a segurança nas comunicações entre o cliente e o servidor.
 
