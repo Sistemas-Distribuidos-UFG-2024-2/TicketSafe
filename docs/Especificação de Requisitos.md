@@ -29,7 +29,7 @@ O objetivo do sistema é oferecer uma plataforma eficiente e escalável para ven
 * Sistema de backup e recuperação distribuídos.  
 * Funcionalidades de escalabilidade e alta disponibilidade.
 
-	2.3 *Definições, Acrônimos e Abreviações*
+2.3 *Definições, Acrônimos e Abreviações*
 
 * Redis: Sistema de armazenamento em estrutura de dados em memória, usado para gerenciamento de filas e caching
 
