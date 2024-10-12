@@ -117,7 +117,7 @@
 
 # Logging: Implementar um sistema de logging centralizado usando ELK Stack (Elasticsearch, Logstash, Kibana) para facilitar a análise de logs.
 
-# 4\. *SEGURANÇA
+# 4\. SEGURANÇA
 
 # 4.1 AUTENTICAÇÃO E AUTORIZAÇÃO
 
@@ -159,10 +159,8 @@
 
 # 
 
-# 7\. *CONCLUSÃO
+# 7\. CONCLUSÃO
 
 # Este projeto de sistema distribuído visa criar uma plataforma robusta para gerenciamento de ingressos que não apenas atenda às necessidades dos organizadores de eventos e consumidores, mas também seja escalável, resiliente e fácil de manter. Ao aplicar princípios de sistemas distribuídos, garantimos que o sistema será capaz de evoluir e se adaptar às mudanças no mercado.
 
 # 
-
-[image1]: <data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAnAAAAAICAYAAAB5/cImAAAARUlEQVR4Xu3WMQ0AIADAMFziCFGYgx8FLOnRZwo25l4HAICO8QYAAP5m4AAAYgwcAECMgQMAiDFwAAAxBg4AIMbAAQDEXBexb+/rxtwtAAAAAElFTkSuQmCC>
