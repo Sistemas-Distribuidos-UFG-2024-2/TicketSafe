@@ -6,57 +6,57 @@
 # 1. VISÃO GERAL
 
 
-# **O serviço de gerenciamento de ingressos é um sistema back-end distribuído que fornece funcionalidades para a venda, reserva e gerenciamento de ingressos para eventos. Este sistema é projetado para operar em um ambiente não web, permitindo integração com aplicativos móveis ou sistemas de terceiros, utilizando princípios de sistemas distribuídos como escalabilidade, disponibilidade e tolerância a falhas.**
+#   O serviço de gerenciamento de ingressos é um sistema back-end distribuído que fornece funcionalidades para a venda, reserva e gerenciamento de ingressos para eventos. Este sistema é projetado para operar em um ambiente não web, permitindo integração com aplicativos móveis ou sistemas de terceiros, utilizando princípios de sistemas distribuídos como escalabilidade, disponibilidade e tolerância a falhas.
 
-# 	**1.1 CONTEXTO**
+# 	1.1 CONTEXTO
 
-# **Com o aumento da demanda por eventos e a necessidade de soluções que possam ser integradas a diferentes plataformas, a construção de um sistema back-end robusto e distribuído é crucial. Este projeto tem como objetivo desenvolver uma arquitetura que otimize o desempenho e a confiabilidade do gerenciamento de ingressos.**
-
-# 
-
-# 	**1.2 PÚBLICO-ALVO*
+#   Com o aumento da demanda por eventos e a necessidade de soluções que possam ser integradas a diferentes plataformas, a construção de um sistema back-end robusto e distribuído é crucial. Este projeto tem como objetivo desenvolver uma arquitetura que otimize o desempenho e a confiabilidade do gerenciamento de ingressos.
 
 # 
 
-# ***Organizadores de Eventos*****: Empresas ou indivíduos que gerenciam eventos e precisam de uma plataforma para controlar ingressos.**
+# 	1.2 PÚBLICO-ALVO
 
-# ***Consumidores*****: Usuários que compram ingressos por meio de aplicativos ou sistemas de terceiros.**
+# 
 
-# ***Agências de Vendas*****: Empresas que atuam como intermediárias na venda de ingressos.**
+# Organizadores de Eventos: Empresas ou indivíduos que gerenciam eventos e precisam de uma plataforma para controlar ingressos.
 
-# **2\. *OBJETIVOS***
+# Consumidores: Usuários que compram ingressos por meio de aplicativos ou sistemas de terceiros.
 
-# **2.1 OBJETIVO GERAL**	
+# Agências de Vendas: Empresas que atuam como intermediárias na venda de ingressos.
 
-# **Desenvolver um sistema back-end distribuído de gerenciamento de ingressos que permita a venda e reserva de ingressos de forma eficiente, escalável e segura, sem a necessidade de uma interface web.**
+# 2\. OBJETIVOS
 
-# **2.2 OBJETIVOS ESPECÍFICOS**
+# 2.1 OBJETIVO GERAL	
 
-# **1\.** *Gerenciamento de Eventos***: Permitir que organizadores criem, atualizem e excluam eventos.**
+#   Desenvolver um sistema back-end distribuído de gerenciamento de ingressos que permita a venda e reserva de ingressos de forma eficiente, escalável e segura, sem a necessidade de uma interface web.
 
-# **2\.** *Processamento de Ingressos***: Implementar funcionalidades para venda e reserva de ingressos com alta disponibilidade.**
+# 2.2 OBJETIVOS ESPECÍFICOS
+
+# 1\.Gerenciamento de Eventos: Permitir que organizadores criem, atualizem e excluam eventos.
+
+# 2\.Processamento de Ingressos: Implementar funcionalidades para venda e reserva de ingressos com alta disponibilidade.
 
 # 
 
 # 
 
-# **3\.** *Autenticação e Autorização***: Implementar um sistema seguro de autenticação.**
+# 3\.Autenticação e Autorização: Implementar um sistema seguro de autenticação.
 
-# **4\.** *Relatórios e Análises***: Fornecer relatórios sobre vendas e frequência de eventos, aproveitando dados distribuídos.**
+# 4\.Relatórios e Análises: Fornecer relatórios sobre vendas e frequência de eventos, aproveitando dados distribuídos.
 
-# **5\.** *Integração de Pagamentos***: Integrar métodos de pagamento seguros.**
+# 5\.Integração de Pagamentos: Integrar métodos de pagamento seguros.
 
-# **6\.** *Escalabilidade Horizontal***: Garantir que o sistema possa ser ampliado facilmente para lidar com a demanda crescente.**
+# 6\.Escalabilidade Horizontal: Garantir que o sistema possa ser ampliado facilmente para lidar com a demanda crescente.
 
-# **7\.** *Tolerância a Falhas***: Implementar estratégias que assegurem o funcionamento do sistema mesmo diante de falhas.**
+# 7\.Tolerância a Falhas: Implementar estratégias que assegurem o funcionamento do sistema mesmo diante de falhas.
 
-# **3\.*ESPECIFICAÇÕES***
+# 3\.ESPECIFICAÇÕES
 
-# **3.1 ARQUITETURA DO SISTEMA**
+# 3.1 ARQUITETURA DO SISTEMA
 
-# **3.1.1 MODELO DE MICROSSERVIÇOS**
+# 3.1.1 MODELO DE MICROSSERVIÇOS
 
-# **O sistema será implementado usando uma arquitetura de microserviços, permitindo que diferentes partes do sistema sejam desenvolvidas, implantadas e escaladas de forma independente.**
+#   O sistema será implementado usando uma arquitetura de microserviços, permitindo que diferentes partes do sistema sejam desenvolvidas, implantadas e escaladas de forma independente.
 
 # **Principais Microserviços:**
 
