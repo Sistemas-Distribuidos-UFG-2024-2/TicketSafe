@@ -1,11 +1,3 @@
-![linha horizontal][image1]
-
-**Universidade Federal de Goiás**   
-***Disciplina***: Sistemas Distribuídos   
-***Departamento***: Instituto de Informática   
-***Integrantes***: Fabio Ofugi Mikami, Paulo Victor Passos, Rafael Oliveira de Melo, Rilbert Fernando Teixeira Santos, Vinícius Correia Soares
-
-# 
 
 # TicketSafe
 
