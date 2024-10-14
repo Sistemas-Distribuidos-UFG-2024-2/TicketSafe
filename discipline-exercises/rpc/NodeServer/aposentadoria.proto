@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package aposentadoria;
+
+// Serviço gRPC para calcular aposentadoria
+service AposentadoriaService {
+  rpc VerificarAposentadoria (AposentadoriaRequest) returns (AposentadoriaResponse);
+}
+
+// Definição das mensagens
+message AposentadoriaRequest {
+  int32 idade = 1;
+  int32 tempoServico = 2;
+}
+
+message AposentadoriaResponse {
+  bool podeAposentar = 1;
+  string mensagem = 2;
+}
