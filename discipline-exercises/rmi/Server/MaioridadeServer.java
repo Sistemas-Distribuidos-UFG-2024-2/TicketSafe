@@ -12,7 +12,7 @@ public class MaioridadeServer {
             // Registra o serviço com o nome "MaioridadeService"
             registry.rebind("MaioridadeService", service);
             
-            System.out.println("Servidor RMI de verificação de maioridade está pronto.");
+            System.out.println("Servidor RMI de verificacao de maioridade esta pronto.");
         } catch (Exception e) {
             System.err.println("Erro no servidor: " + e.toString());
             e.printStackTrace();

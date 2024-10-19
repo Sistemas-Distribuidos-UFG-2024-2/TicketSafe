@@ -16,13 +16,13 @@ public class MaioridadeServiceImpl extends UnicastRemoteObject implements Maiori
         } else if (sexo.equalsIgnoreCase("feminino")) {
             maioridade = 21;
         } else {
-            return "Sexo inválido: " + sexo;
+            return "Sexo invalido: " + sexo;
         }
         
         if (idade >= maioridade) {
-            return nome + " já atingiu a maioridade.";
+            return nome + " ja atingiu a maioridade.";
         } else {
-            return nome + " ainda não atingiu a maioridade.";
+            return nome + " ainda nao atingiu a maioridade.";
         }
     }
 }
