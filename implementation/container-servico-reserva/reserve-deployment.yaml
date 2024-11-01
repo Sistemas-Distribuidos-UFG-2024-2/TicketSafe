@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reserva-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reserva-service
+  template:
+    metadata:
+      labels:
+        app: reserva-service
+    spec:
+      imagePullSecrets:
+      - name: my-registry-secret  # Nome do secret que você criou
+      containers:
+      - name: services
+        image: gru.ocir.io/gr53fjij2i4f/reserve-service:latest
+        env:
+        - name: REDIS_HOST
+          value: "redis"  # Serviço do Redis no Kubernetes
+        - name: REDIS_PORT
+          value: "6379"
+        ports:
+        - containerPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reserva-service
+spec:
+  selector:
+    app: reserva-service
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
+  type: LoadBalancer

@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      imagePullSecrets:
+      - name: my-registry-secret  # Nome do secret que você criou
+      containers:
+      - name: redis
+        image: redis:6.0
+        ports:
+        - containerPort: 6379
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+
+      - name: sync-script
+        image: gru.ocir.io/gr53fjij2i4f/sync-script-image:latest 
+        env:
+          - name: PG_HOST
+            value: "postgres"
+          - name: PG_PORT
+            value: "5432"
+          - name: PG_USER
+            value: "user"
+          - name: PG_PASSWORD
+            value: "password"
+          - name: PG_DATABASE
+            value: "reservas"
+          - name: REDIS_HOST
+            value: "redis"  
+          - name: REDIS_PORT
+            value: "6379"
+        command:
+          - /bin/sh
+          - -c
+          - |
+            # Aguarda o Redis estar disponível usando redis-cli
+            until redis-cli -h $REDIS_HOST -p $REDIS_PORT ping | grep -q PONG; do
+              echo "Aguardando Redis..."
+              sleep 1
+            done
+            echo "Redis está disponível. Iniciando sincronização com o PostgreSQL."
+
+            # Conexão com o PostgreSQL e sincronização
+            npm install pg ioredis  # Instale as dependências necessárias se estiver usando Node.js
+            node sync-script.js  # Execute seu script de sincronização
+            
+            echo "Sincronização concluída. Finalizando o container."
+            exit 0

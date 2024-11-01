@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  reserve_service:
+    build:
+      context: ./container-servico-reserva
+      dockerfile: Dockerfile
+    image: reserve_service:latest  # Nome da imagem a ser enviada
+
+  worker_service:
+    build:
+      context: ./container-servico-workersync
+      dockerfile: Dockerfile
+    image: worker_service:latest  # Nome da imagem a ser enviada

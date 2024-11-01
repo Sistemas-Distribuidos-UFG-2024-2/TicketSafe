@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sync-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sync-service
+  template:
+    metadata:
+      labels:
+        app: sync-service
+    spec:
+      imagePullSecrets:
+      - name: my-registry-secret  # Nome do secret que você criou
+      containers:
+      - name: worker
+        image: gru.ocir.io/gr53fjij2i4f/sync-service:latest  # Imagem do worker
+        env:
+        - name: REDIS_HOST
+          value: "redis"  # Serviço do Redis no Kubernetes
+        - name: REDIS_PORT
+          value: "6379"
+        - name: PG_HOST
+          value: "postgres"  # Nome do serviço PostgreSQL no Kubernetes
+        - name: PG_PORT
+          value: "5432"
+        - name: PG_USER
+          value: "user"  # Usuário do PostgreSQL
+        - name: PG_PASSWORD
+          value: "password"  # Senha do PostgreSQL
+        - name: PG_DATABASE
+          value: "reservas"  # Nome do banco de dados do PostgreSQL
+        ports:
+        - containerPort: 3000  # Altere para a porta que o worker usa, se diferente
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sync-service
+spec:
+  selector:
+    app: sync-service
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000  # Altere para a porta que o worker usa, se diferente
+  type: ClusterIP  # Altere para LoadBalancer se precisar acessar externamente
