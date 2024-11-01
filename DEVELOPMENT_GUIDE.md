@@ -35,7 +35,7 @@
 * 
 
 
-## 	Orquestração e Implantação
+   ### Orquestração e Implantação
 
 * **Kubernetes**: Para gerenciar os microsserviços e escalar automaticamente.  
 * **Oracle Cloud**: Plataforma de nuvem onde o sistema será hospedado.  
