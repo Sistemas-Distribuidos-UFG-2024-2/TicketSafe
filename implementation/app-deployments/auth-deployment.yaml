@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      imagePullSecrets:
+      - name: my-registry-secret  # Nome do secret que você criou
+      containers:
+      - name: services
+        image: gru.ocir.io/gr53fjij2i4f/auth-service:latest  # Substitua pelo nome da imagem do seu serviço de auth
+        env:
+        - name: REDIS_HOST
+          value: "redis"  # Serviço do Redis no Kubernetes
+        - name: REDIS_PORT
+          value: "6379"
+        - name: PG_HOST
+          value: "postgres"  # Nome do serviço PostgreSQL
+        - name: PG_PORT
+          value: "5432"  # Porta padrão do PostgreSQL
+        - name: PG_USER
+          value: "user"  # Nome do usuário do PostgreSQL
+        - name: PG_PASSWORD
+          value: "password"  # Senha do PostgreSQL
+        - name: PG_DATABASE
+          value: "reservas"  # Nome do banco de dados
+        - name: JWT_SECRET
+          value: "ticketsafejwt"  # Segredo para o token JWT, defina um valor seguro
+        ports:
+        - containerPort: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+spec:
+  selector:
+    app: auth-service
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
+  type: LoadBalancer

@@ -1,7 +1,7 @@
 {
-  "name": "container-servico-reserva",
+  "name": "container-servico-pagamento",
   "version": "1.0.0",
-  "main": "reserveService.js",
+  "main": "paymentService.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

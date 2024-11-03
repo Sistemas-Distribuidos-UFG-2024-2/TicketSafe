@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: confirmation-worker
+spec:
+  replicas: 1  # Ajuste o número de replicas conforme necessário
+  selector:
+    matchLabels:
+      app: confirmation-worker
+  template:
+    metadata:
+      labels:
+        app: confirmation-worker
+    spec:
+      imagePullSecrets:
+      - name: my-registry-secret  # Nome do secret que você criou
+      containers:
+      - name: worker
+        image: gru.ocir.io/gr53fjij2i4f/confirmation-worker:latest  # Substitua pela imagem correta do worker
+        env:
+        - name: REDIS_HOST
+          value: "redis"  # Serviço do Redis no Kubernetes
+        - name: REDIS_PORT
+          value: "6379"
+        - name: PG_HOST
+          value: "postgres"  # Serviço do PostgreSQL no Kubernetes
+        - name: PG_PORT
+          value: "5432"  # Porta padrão do PostgreSQL
+        - name: PG_USER
+          value: "user"  # Substitua pelo usuário do banco de dados
+        - name: PG_PASSWORD
+          value: "password"  # Substitua pela senha do banco de dados
+        - name: PG_DATABASE
+          value: "reservas"  # Substitua pelo nome do banco de dados
+        # Adicione qualquer outra variável de ambiente necessária
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: confirmation-worker
+spec:
+  selector:
+    app: confirmation-worker
+  ports:
+    - protocol: TCP
+      port: 80  # Porta do serviço, ajuste conforme necessário
+      targetPort: 3000  # Substitua pela porta em que seu worker escuta, se aplicável
+  type: ClusterIP  # Ou LoadBalancer, conforme necessário

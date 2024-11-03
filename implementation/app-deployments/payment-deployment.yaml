@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pagamento-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pagamento-service
+  template:
+    metadata:
+      labels:
+        app: pagamento-service
+    spec:
+      imagePullSecrets:
+      - name: my-registry-secret  # Nome do secret que você criou
+      containers:
+      - name: services
+        image: gru.ocir.io/gr53fjij2i4f/payment-service:latest
+        env:
+        - name: REDIS_HOST
+          value: "redis"  # Serviço do Redis no Kubernetes
+        - name: REDIS_PORT
+          value: "6379"
+        - name: PG_HOST
+          value: "postgres"  # Serviço do PostgreSQL no Kubernetes
+        - name: PG_PORT
+          value: "5432"  # Porta padrão do PostgreSQL
+        - name: PG_USER
+          value: "user"  # Usuário do PostgreSQL
+        - name: PG_PASSWORD
+          value: "password"  # Senha do PostgreSQL
+        - name: PG_DATABASE
+          value: "reservas"  # Nome do banco de dados
+        ports:
+        - containerPort: 4000  # A porta do serviço de pagamento
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pagamento-service
+spec:
+  selector:
+    app: pagamento-service
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 4000  # Porta do container
+  type: LoadBalancer

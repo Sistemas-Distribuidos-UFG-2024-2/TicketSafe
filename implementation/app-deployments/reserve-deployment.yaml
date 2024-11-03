@@ -22,6 +22,16 @@ spec:
           value: "redis"  # Serviço do Redis no Kubernetes
         - name: REDIS_PORT
           value: "6379"
+        - name: PG_HOST
+          value: "postgres"  # Nome do serviço PostgreSQL
+        - name: PG_PORT
+          value: "5432"  # Porta padrão do PostgreSQL
+        - name: PG_USER
+          value: "user"  # Nome do usuário do PostgreSQL
+        - name: PG_PASSWORD
+          value: "password"  # Senha do PostgreSQL
+        - name: PG_DATABASE
+          value: "reservas"  # Nome do banco de dados
         ports:
         - containerPort: 3000
 ---

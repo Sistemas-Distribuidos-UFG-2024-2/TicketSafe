@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      imagePullSecrets:
+      - name: my-registry-secret  # Nome do secret que você criou
+      containers:
+      - name: redis-sync
+        image: gru.ocir.io/gr53fjij2i4f/custom-redis-sync:latest  # Nome da nova imagem customizada
+        ports:
+        - containerPort: 6379
+        env:
+          - name: PG_HOST
+            value: "postgres"
+          - name: PG_PORT
+            value: "5432"
+          - name: PG_USER
+            value: "user"
+          - name: PG_PASSWORD
+            value: "password"
+          - name: PG_DATABASE
+            value: "reservas"
+          - name: REDIS_HOST
+            value: "localhost"  # Como o Redis está rodando no próprio container
+          - name: REDIS_PORT
+            value: "6379"
+        resources:
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
