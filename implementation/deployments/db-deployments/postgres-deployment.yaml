@@ -1,0 +1,85 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-scripts
+data:
+  init.sql: |
+    -- Criação da tabela ingressos
+    CREATE TABLE IF NOT EXISTS public.ingressos (
+        id SERIAL PRIMARY KEY,
+        ingressos_disponiveis integer NOT NULL,
+        nome character varying(50)
+    );
+
+    -- Criação da tabela reservas
+    CREATE TABLE IF NOT EXISTS public.reservas (
+        id SERIAL PRIMARY KEY,
+        evento_id integer NOT NULL,
+        user_id uuid NOT NULL,
+        quantidade integer NOT NULL,
+        "timestamp" bigint NOT NULL,
+        pagamento_efetuado boolean NOT NULL
+    );
+
+    -- Criação da tabela usuarios
+    CREATE TABLE IF NOT EXISTS public.usuarios (
+        id SERIAL PRIMARY KEY,
+        username character varying(255) NOT NULL,
+        password character varying(255) NOT NULL,
+        uuid uuid NOT NULL
+    );
+
+    -- Criação da tabela fila_espera
+    CREATE TABLE IF NOT EXISTS public.fila_espera (
+        id SERIAL PRIMARY KEY,
+        evento_id INT NOT NULL,
+        user_id uuid NOT NULL,
+        quantidade INT NOT NULL
+    );
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:13
+        env:
+        - name: POSTGRES_USER
+          value: "user"         # Nome do usuário do PostgreSQL
+        - name: POSTGRES_PASSWORD
+          value: "password"     # Senha do usuário do PostgreSQL
+        - name: POSTGRES_DB
+          value: "reservas"     # Nome do banco de dados a ser criado
+        ports:
+        - containerPort: 5432    # Porta padrão do PostgreSQL
+        volumeMounts:
+        - name: init-scripts
+          mountPath: /docker-entrypoint-initdb.d # Pasta onde os scripts de inicialização serão montados
+      volumes:
+      - name: init-scripts
+        configMap:
+          name: postgres-init-scripts # Referência ao ConfigMap que contém os scripts
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  ports:
+  - port: 5432                # Porta exposta pelo serviço
+    targetPort: 5432          # Porta do contêiner
+  selector:
+    app: postgres             # Seleciona os Pods com o label 'app: postgres'

@@ -16,18 +16,18 @@ subscriber.on('connect', () => {
     console.log('Worker de Fila de Espera Conectado ao Redis');
 });
 
-// Conexão com o PostgreSQL
-const pgClient = new Client({
-    host: process.env.PG_HOST || 'postgres',
-    port: process.env.PG_PORT || 5432,
-    user: process.env.PG_USER || 'user',
-    password: process.env.PG_PASSWORD || 'password',
-    database: process.env.PG_DATABASE || 'reservas'
-});
+// // Conexão com o PostgreSQL
+// const pgClient = new Client({
+//     host: process.env.PG_HOST || 'postgres',
+//     port: process.env.PG_PORT || 5432,
+//     user: process.env.PG_USER || 'user',
+//     password: process.env.PG_PASSWORD || 'password',
+//     database: process.env.PG_DATABASE || 'reservas'
+// });
 
-pgClient.connect()
-    .then(() => console.log('Conectado ao PostgreSQL'))
-    .catch(err => console.error('Erro ao conectar ao PostgreSQL', err));
+// pgClient.connect()
+//     .then(() => console.log('Conectado ao PostgreSQL'))
+//     .catch(err => console.error('Erro ao conectar ao PostgreSQL', err));
 
 // Inscrever-se no canal de reservas canceladas
 subscriber.subscribe('reservas_canceladas', (err, count) => {
@@ -60,34 +60,51 @@ const processWaitingList = async (eventoId) => {
     const waitingRequest = await redisClient.rpop(waitingListKey);
     if (waitingRequest) {
         const { userId, quantidade } = JSON.parse(waitingRequest);
+
+        // Iniciar transação
+        const transaction = redisClient.multi();
+
+        // Decrementa os ingressos disponíveis
+        transaction.decrby(`evento:${eventoId}:ingressosDisponiveis`, quantidade);
         
-        const ingressosDisponiveis = await redisClient.get(`evento:${eventoId}:ingressosDisponiveis`);
-        
-        if (ingressosDisponiveis > 0 && ingressosDisponiveis >= quantidade) {
-            // Se houver ingressos disponíveis, realiza a reserva
-            
-            await redisClient.decrby(`evento:${eventoId}:ingressosDisponiveis`, quantidade);
+        // Executa a transação
+        const results = await transaction.exec();
+        const ingressosRestantes = results[0];
+
+        if (ingressosRestantes[1]  >= 0) {
+            // Se ingressos foram suficientes, conclui a reserva
             const timestamp = Date.now();
             const reservationKey = `reserva:${eventoId}:${userId}:${timestamp}:${quantidade}`;
-            await redisClient.hset(reservationKey, 'dummy', '');
-            await redisClient.expire(reservationKey, 600);
-        
-            // Salvar no banco de dados
-            await pgClient.query(
-                'INSERT INTO reservas(evento_id, user_id, quantidade, timestamp, pagamento_efetuado) VALUES ($1, $2, $3, $4, $5)',
-                [eventoId, userId, quantidade, timestamp, 0]
-              );
+
+            // Pipelining Redis operations
+            const pipeline = redisClient.pipeline();
+            pipeline.hset(reservationKey, 'dummy', '');
+            pipeline.expire(reservationKey, 600);
+            await pipeline.exec();
+
+            // // Salvar a reserva no banco de dados
+            // await pgClient.query(
+            //     'INSERT INTO reservas(evento_id, user_id, quantidade, timestamp, pagamento_efetuado) VALUES ($1, $2, $3, $4, $5)',
+            //     [eventoId, userId, quantidade, timestamp, 0]
+            // );
 
             console.log(`Reserva realizada para o usuário ${userId} do evento ${eventoId} com ${quantidade} ingressos.`);
         } else {
-            console.log(`Nenhum ingresso disponível para atender a reserva do usuário ${userId}.`);
-            // Adicionar de volta na fila se não houver ingressos disponíveis
-            await redisClient.lpush(waitingListKey, waitingRequest);
+            // Caso quantidade de ingressos seja insuficiente, iniciar nova transação para reverter
+            const revertTransaction = redisClient.multi();
+            revertTransaction.incrby(`evento:${eventoId}:ingressosDisponiveis`, quantidade);
+            revertTransaction.rpush(waitingListKey, waitingRequest);
+            await revertTransaction.exec();
+
+            console.log(`Ingressos insuficientes para o usuário ${userId} - reserva devolvida à fila.`);
+            // Reinsere a tentativa de reserva na fila
         }
     } else {
         console.log('Fila de espera vazia, nenhuma tentativa de reserva a processar.');
     }
 };
+
+
 
 // Inicia o worker
 const startWorker = () => {

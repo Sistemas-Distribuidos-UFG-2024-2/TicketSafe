@@ -11,21 +11,21 @@ const redisClient = new Redis({
 
 redisClient.on('connect', () => console.log('Conectado ao Redis'));
 
-// Configurações do PostgreSQL
-const pgClient = new Client({
-  host: process.env.PG_HOST || 'localhost',
-  port: process.env.PG_PORT || 5432,
-  user: process.env.PG_USER || 'user',
-  password: process.env.PG_PASSWORD || 'password',
-  database: process.env.PG_DATABASE || 'reservas'
-});
+// // Configurações do PostgreSQL
+// const pgClient = new Client({
+//   host: process.env.PG_HOST || 'localhost',
+//   port: process.env.PG_PORT || 5432,
+//   user: process.env.PG_USER || 'user',
+//   password: process.env.PG_PASSWORD || 'password',
+//   database: process.env.PG_DATABASE || 'reservas'
+// });
 
-async function connectPostgres() {
-  await pgClient.connect();
-  console.log('Conectado ao PostgreSQL');
-}
+// async function connectPostgres() {
+//   await pgClient.connect();
+//   console.log('Conectado ao PostgreSQL');
+// }
 
-connectPostgres();
+// connectPostgres();
 
 // Endpoint para criar uma reserva
 app.post('/ingressos/reservar', async (req, res) => {
@@ -40,36 +40,69 @@ app.post('/ingressos/reservar', async (req, res) => {
   }
 
   try {
-    const ingressosDisponiveis = await redisClient.get(`evento:${eventoId}:ingressosDisponiveis`);
-    if (ingressosDisponiveis === null) {
-      return res.status(404).send({ message: 'Evento não encontrado' });
-    }
-
-    if (quantidade > parseInt(ingressosDisponiveis)) {
-      // Coloca a reserva na fila de espera
-      await redisClient.lpush(`fila_espera:${eventoId}`, JSON.stringify({ userId, quantidade }));
-      return res.status(200).send({ message: 'Ingressos esgotados, você foi colocado na fila de espera e uma nova tentativa ocorrerá caso volte a ter ingressos disponíveis. Não se preocupe caso isso aconteça você será notificado!' });
-    }
-
-    await redisClient.decrby(`evento:${eventoId}:ingressosDisponiveis`, quantidade);
+    // Iniciar transação
+    const transaction = redisClient.multi();
     
+    // Decrementar ingressos disponíveis
+    transaction.decrby(`evento:${eventoId}:ingressosDisponiveis`, quantidade);
+    
+    // Executar transação
+    const results = await transaction.exec();
+
+    // Verificar resultado do decremento
+    const ingressosRestantes = results[0];
+
+    if (ingressosRestantes[1] < 0) {
+      // Não há ingressos suficientes; reverter o decremento
+      const revertTransaction = redisClient.multi();
+      revertTransaction.incrby(`evento:${eventoId}:ingressosDisponiveis`, quantidade);
+      
+      // Verifica se o usuário já está na fila de espera
+      const userInQueueExists = await redisClient.lrange(`fila_espera:${eventoId}`, 0, -1);
+      const userInQueue = userInQueueExists.some(reserva => JSON.parse(reserva).userId === userId);
+      
+      if (!userInQueue) {
+        // Se o usuário não estiver na fila, adiciona o usuário à fila de espera
+        revertTransaction.lpush(`fila_espera:${eventoId}`, JSON.stringify({ userId, quantidade }));
+        await revertTransaction.exec();
+      } else {
+        await revertTransaction.exec();
+        return res.status(400).send({
+          message: 'Você já está na fila de espera para este evento.',
+        });
+      }
+
+      
+      return res.status(200).send({
+        message: 'Ingressos esgotados, você foi colocado na fila de espera. Você será notificado caso ingressos estejam disponíveis!',
+      });
+    }
+
+    // Se ingressos foram suficientes, prossegue com a reserva
     const timestamp = Date.now();
     const reservationKey = `reserva:${eventoId}:${userId}:${timestamp}:${quantidade}`;
-    await redisClient.hset(reservationKey, 'dummy', '');
-    await redisClient.expire(reservationKey, 600);
+    
+    // Pipelining Redis operations
+    const pipeline = redisClient.pipeline();
+    pipeline.hset(reservationKey, 'dummy', '');
+    pipeline.expire(reservationKey, 600);
+    await pipeline.exec();
 
-    await pgClient.query(
-      'INSERT INTO reservas(evento_id, user_id, quantidade, timestamp, pagamento_efetuado) VALUES ($1, $2, $3, $4, $5)',
-      [eventoId, userId, quantidade, timestamp, 0]
-    );
+    // // Salvar a reserva no banco de dados
+    // await pgClient.query(
+    //   'INSERT INTO reservas(evento_id, user_id, quantidade, timestamp, pagamento_efetuado) VALUES ($1, $2, $3, $4, $5)',
+    //   [eventoId, userId, quantidade, timestamp, 0]
+    // );
 
-    res.status(200).send({ message: 'Reserva efetuada com sucesso, você tem 10 minutos para confirmar a compra!', timestamp });
+    res.status(200).send({
+      message: 'Reserva efetuada com sucesso, você tem 10 minutos para confirmar a compra!',
+      timestamp,
+    });
   } catch (err) {
     console.error('Erro ao processar a reserva:', err);
     res.status(500).send('Erro ao processar a reserva');
   }
 });
-
 
 // Endpoint para cancelar uma reserva
 app.post('/ingressos/cancelar', async (req, res) => {
@@ -98,22 +131,28 @@ app.post('/ingressos/cancelar', async (req, res) => {
       return res.status(404).send({ message: 'Reserva não encontrada' });
     }
 
+    // Iniciar transação para cancelamento
+    const cancelTransaction = redisClient.multi();
+    
     // Incrementa os ingressos disponíveis no Redis
-    await redisClient.incrby(`evento:${eventoId}:ingressosDisponiveis`, quantidade);
-
+    cancelTransaction.incrby(`evento:${eventoId}:ingressosDisponiveis`, quantidade);
+    
     // Remove a chave da reserva no Redis
-    await redisClient.del(reservationKey);
-
-    // Remove a reserva do PostgreSQL
-    await pgClient.query(
-      'DELETE FROM reservas WHERE evento_id = $1 AND user_id = $2 AND timestamp = $3',
-      [eventoId, userId, timestamp]
-    );
-
+    cancelTransaction.del(reservationKey);
+    
     // Publica uma notificação no canal de reservas canceladas
     const message = `reserva_cancelada:${eventoId}:${userId}:${timestamp}:${quantidade}`;
-    redisClient.publish('reservas_canceladas', message);
+    cancelTransaction.publish('reservas_canceladas', message);
     
+    // Executa a transação
+    await cancelTransaction.exec();
+
+    // // Remove a reserva do PostgreSQL
+    // await pgClient.query(
+    //   'DELETE FROM reservas WHERE evento_id = $1 AND user_id = $2 AND timestamp = $3',
+    //   [eventoId, userId, timestamp]
+    // );
+
     // Retorna confirmação ao usuário
     res.status(200).send({ message: 'Reserva cancelada e excluída com sucesso!' });
   } catch (err) {

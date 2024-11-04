@@ -76,7 +76,26 @@ async function sincronizarRedisComPostgres() {
         }
       }
     }
+    // Obtendo a fila de espera do banco de dados
+    const filaEsperaRes = await pgClient.query('SELECT evento_id, user_id, quantidade FROM fila_espera');
+    const filaEspera = filaEsperaRes.rows;
 
+    for (const item of filaEspera) {
+      const { evento_id, user_id, quantidade } = item;
+      const filaEsperaKey = `fila_espera:${evento_id}`;
+
+      // Cria um objeto para armazenar a fila de espera
+      const filaEsperaItem = JSON.stringify({ userId: user_id, quantidade });
+      const timestamp = Date.now()
+      // Adiciona à fila de espera no Redis
+      await redisClient.lpush(filaEsperaKey, filaEsperaItem);
+      console.log(`Item adicionado à fila de espera do evento ${evento_id}: ${filaEsperaItem}`);
+      
+      const message = `reserva_cancelada:${evento_id}:${user_id}:${timestamp}:${quantidade}`;
+      redisClient.publish('reservas_canceladas', message);
+
+    }
+    
     console.log('Sincronização concluída');
   } catch (error) {
     console.error('Erro ao sincronizar:', error);
