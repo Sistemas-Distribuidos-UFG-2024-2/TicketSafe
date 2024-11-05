@@ -48,7 +48,7 @@
 
 ## Sessão com alguns comandos do banco REDIS
 1.   Dentro do container do redis execute **(redis-cli)** para acessar o cliente/banco redis.
-2.   **"keys *"** (lista todas as chaves presentes no redis)
+2.   "keys *" (lista todas as chaves presentes no redis)
 3.   **get key** (captura o valor de uma chave)
 
 
