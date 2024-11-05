@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/5a3d8d42-8154-4e3a-85df-2131fdf4f82e)# Guia de Desenvolvimento do TicketSafe
+# Guia de Desenvolvimento do TicketSafe
 
 ## Introdução ao Guia do Desenvolvimento
 
