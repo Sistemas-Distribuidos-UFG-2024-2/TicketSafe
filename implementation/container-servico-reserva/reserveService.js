@@ -40,6 +40,12 @@ app.post('/ingressos/reservar', async (req, res) => {
   }
 
   try {
+    // Verifica se o evento existe no Redis
+    const eventoExiste = await redisClient.get(`evento:${eventoId}:ingressosDisponiveis`);
+    if (eventoExiste === null) {
+      return res.status(404).send({ message: 'Evento não encontrado' });
+    }
+
     // Iniciar transação
     const transaction = redisClient.multi();
     
