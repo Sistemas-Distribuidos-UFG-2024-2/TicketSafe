@@ -11,6 +11,7 @@
 -  **/discipline\_exercises**: Contém atividades relacionadas a disciplina Sistemas Distribuídos, na qual o projeto em questão se baseia.
 -   **/docs**: Inclui documentação, diagramas e informações adicionais ou relevantes sobre o projeto.
 -   **/implementation**: Inclui o repositorio com o ambiente atual de desenvolvimento da solução, necessário para deploy dos componentes criados ou que forem alterados.
+
 ## Configuração do Ambiente de Desenvolvimento
 
    Para configurar o ambiente de desenvolvimento do TicketSafe, siga estas etapas:  
@@ -81,5 +82,5 @@
    Aqui estão algumas referências úteis para aprofundar o conhecimento nas tecnologias utilizadas no projeto:  
      
 * [Kubernetes](https://kubernetes.io/pt-br/)
-* [REDIS] (https://redis.io/docs/latest/)
+* [REDIS](https://redis.io/docs/latest/)
 * 
