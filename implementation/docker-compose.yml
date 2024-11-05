@@ -1,14 +1,65 @@
 version: '3.8'
-
+# Modifique para incluir o nome da sua imagem - pode alterar somente o Namespace considerando o ambiente da Oracle
 services:
+  # Auth Service
+  auth_service:
+    build:
+      context: ./container-servico-auth
+      dockerfile: Dockerfile
+    image: gru.ocir.io/gr53fjij2i4f/auth-service:latest
+
+  # Evento Service
+  evento_service:
+    build:
+      context: ./container-servico-eventos
+      dockerfile: Dockerfile  
+    image: gru.ocir.io/gr53fjij2i4f/evento-service:latest
+
+  # Payment Service
+  payment_service:
+    build:
+      context: ./container-servico-pagamento
+      dockerfile: Dockerfile
+    image: gru.ocir.io/gr53fjij2i4f/payment-service:latest
+
+  # Redis Service
+  redis_service:
+    build:
+      context: ./container-servico-redis
+      dockerfile: Dockerfile
+    image: gru.ocir.io/gr53fjij2i4f/custom-redis-sync:latest
+
+  # Reserve Service
   reserve_service:
     build:
       context: ./container-servico-reserva
       dockerfile: Dockerfile
-    image: reserve_service:latest  # Nome da imagem a ser enviada
+    image: gru.ocir.io/gr53fjij2i4f/reserve-service:latest
 
-  worker_service:
+  # Worker Cancel Service
+  worker_cancel:
+    build:
+      context: ./container-servico-workercancel
+      dockerfile: Dockerfile  
+    image: gru.ocir.io/gr53fjij2i4f/cancel-worker:latest
+
+  # Worker Confirmation Service
+  worker_confirmation:
+    build:
+      context: ./container-servico-workerconfirm
+      dockerfile: Dockerfile  
+    image: gru.ocir.io/gr53fjij2i4f/confirmation-worker:latest
+
+  # Worker Reserve Retry
+  worker_reserve_retry:
+    build:
+      context: ./container-servico-workerReserverRetry
+      dockerfile: Dockerfile  
+    image: gru.ocir.io/gr53fjij2i4f/retry-worker:latest
+
+  # Worker Sync Service
+  worker_sync:
     build:
       context: ./container-servico-workersync
       dockerfile: Dockerfile
-    image: worker_service:latest  # Nome da imagem a ser enviada
+    image: gru.ocir.io/gr53fjij2i4f/sync-service:latest
