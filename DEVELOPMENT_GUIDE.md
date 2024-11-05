@@ -23,6 +23,7 @@
 4.   Pesquise na barra de pesquisas pelo serviço **Kubernetes Clusters (OKE)** e crie um cluster no modo **Quick Create**, selecione um **Public Endpoint e Public Workers** para facilitar o desenvolvimento inicialmente.
 5.   Após o recurso cluster criado acesse-o localmente **(Access Cluster - Local Access)**, lá terá os comandos necessários para autenticação local no cluster.
 6.   Após o acesso confirmado já será possivel utilizar os comandos **(kubectl)** para prosseguir com as configurações do cluster e posterior deploy dos serviços.
+7.   Para seguir com os próximos passos abra um terminal na pasta raiz **implementation**.
 
 ## Configurando e fazendo deploy de serviços na nuvem Oracle
 1.   Em um terminal localmente execute o comando a seguir para criação do secret-key para pull de imagens do docker, caso esteja utilizando um container registry privado **(kubectl create secret docker-registry my-registry-secret --docker-server=gru.ocir.io --docker-username=container-registry-namespace/Default/you-username@gmail.com --docker-password='AUTH-TOKEN' --docker-email= YOUR-EMAIL)**
