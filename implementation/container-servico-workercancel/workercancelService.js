@@ -58,10 +58,12 @@ const processExpiredReservation = async (reservationKey) => {
     transaction.incrby(`evento:${eventoId}:ingressosDisponiveis`, quantidade);
     console.log(`Quantidade de ingressos a ser atualizada para o evento ${eventoId}: +${quantidade}`);
 
-    // Publica uma notificação no canal de reservas canceladas
-    const message = `reserva_cancelada:${eventoId}:${userId}:${timestamp}:${quantidade}`;
-    transaction.publish('reservas_canceladas', message);
-
+    // Publica uma notificação para cada ingresso cancelado
+    for (let i = 0; i < quantidade; i++) {
+        const message = `reserva_cancelada:${eventoId}:${userId}:${timestamp}:${quantidade}`;
+        transaction.publish('reservas_canceladas', message);
+      }
+      
     // Executa a transação no Redis
     await transaction.exec();
 

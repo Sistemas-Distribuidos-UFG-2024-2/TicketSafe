@@ -146,9 +146,11 @@ app.post('/ingressos/cancelar', async (req, res) => {
     // Remove a chave da reserva no Redis
     cancelTransaction.del(reservationKey);
     
-    // Publica uma notificação no canal de reservas canceladas
-    const message = `reserva_cancelada:${eventoId}:${userId}:${timestamp}:${quantidade}`;
-    cancelTransaction.publish('reservas_canceladas', message);
+    // Publica uma notificação para cada ingresso cancelado
+    for (let i = 0; i < quantidade; i++) {
+      const message = `reserva_cancelada:${eventoId}:${userId}:${timestamp}:${quantidade}`;
+      cancelTransaction.publish('reservas_canceladas', message);
+    }
     
     // Executa a transação
     await cancelTransaction.exec();
