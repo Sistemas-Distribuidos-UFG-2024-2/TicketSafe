@@ -1,0 +1,20 @@
+{
+  "name": "container-servico-auth",
+  "version": "1.0.0",
+  "main": "auth.js",
+  "scripts": {
+    "start": "node auth.js", 
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "express": "^4.18.2", 
+    "jsonwebtoken": "^9.0.0",
+    "bcryptjs": "^2.4.3",
+    "pg": "^8.7.1",  
+    "ioredis": "^5.3.0",
+    "uuid": "^9.0.0"
+  }
+}

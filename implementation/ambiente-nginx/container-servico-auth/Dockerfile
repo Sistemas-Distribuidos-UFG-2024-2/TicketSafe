@@ -1,0 +1,22 @@
+# Usar uma imagem base do Node.js
+FROM node:14
+
+RUN apt-get update && apt-get install -y netcat
+
+# Definir o diretório de trabalho
+WORKDIR /app
+
+# Copiar o package.json e package-lock.json para a imagem
+COPY package*.json ./
+
+# Instalar as dependências
+RUN npm install
+
+# Copiar o restante do código da aplicação
+COPY . .
+
+# Expor a porta que a aplicação vai usar (ajuste se necessário)
+EXPOSE 5000
+
+# Comando para iniciar o worker de confirmação
+CMD ["node", "auth.js"]

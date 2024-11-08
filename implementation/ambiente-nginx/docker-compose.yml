@@ -1,0 +1,397 @@
+version: '2'
+
+services:
+  # Nginx Load Balancer
+  nginx:
+    image: nginx:alpine
+    container_name: nginx_load_balancer
+    ports:
+      - "9999:9999" # Porta onde o Nginx irá ouvir
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf # Arquivo de configuração do Nginx
+    depends_on:
+      - reserve01
+      - reserve02
+      - reserve03
+      - auth_service
+      - evento_service
+      - payment_service
+    deploy:
+      resources:
+        limits: 
+          cpus: '0.25'
+          memory: '0.5GB'
+
+  # PostgreSQL Service
+  postgres:
+    image: postgres:13
+    container_name: postgres
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: reservas
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql  # Script de inicialização
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: '1.0GB'
+    
+
+  # Redis Service
+  redis:
+    build:
+      context: ./container-servico-redis
+      dockerfile: Dockerfile
+    container_name: redis
+    image: public.ecr.aws/j7t2e9b9/ticket-safe:redis-sync-latest
+    ports:
+      - "6379:6379"
+    environment:
+      PG_HOST: postgres 
+      PG_PORT: 5432
+      PG_USER: user
+      PG_PASSWORD: password
+      PG_DATABASE: reservas
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+    volumes:
+      - redis-data:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+    deploy:
+      resources:
+        limits:
+          cpus: '0.08'
+          memory: '0.3GB'
+    depends_on:
+      - postgres
+    command: >
+      bash -c "until nc -z -v -w30 postgres 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done;
+      redis-server /usr/local/etc/redis/redis.conf"
+    
+
+
+
+  # Auth Service
+  auth_service:
+    hostname: auth_service
+    build:
+      context: ./container-servico-auth
+      dockerfile: Dockerfile
+    image: public.ecr.aws/j7t2e9b9/ticket-safe:auth-service-latest
+    environment:
+      - PORT=5000
+      - REDIS_HOST=redis       # Nome do serviço Redis definido no docker-compose
+      - REDIS_PORT=6379               # Porta do Redis
+      - PG_HOST=postgres      # Nome do serviço PostgreSQL definido no docker-compose
+      - PG_PORT=5432                  # Porta do PostgreSQL
+      - PG_USER=user                  # Nome do usuário do PostgreSQL
+      - PG_PASSWORD=password          # Senha do PostgreSQL
+      - PG_DATABASE=reservas          # Nome do banco de dados
+      - JWT_SECRET=ticketsafejwt      # Segredo JWT (troque por um valor seguro em produção)
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres
+      - redis
+    command: >
+      bash -c "until nc -z -v -w30 postgres 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done; npm start"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.08'
+          memory: '0.2GB'
+    
+
+  # Evento Service
+  evento_service:
+    hostname: evento_service
+    build:
+      context: ./container-servico-eventos
+      dockerfile: Dockerfile  
+    image: public.ecr.aws/j7t2e9b9/ticket-safe:evento-service-latest
+    environment:
+      - PORT=5001
+      - REDIS_HOST=redis       # Nome do serviço Redis definido no docker-compose
+      - REDIS_PORT=6379               # Porta do Redis
+      - PG_HOST=postgres      # Nome do serviço PostgreSQL definido no docker-compose
+      - PG_PORT=5432                  # Porta do PostgreSQL
+      - PG_USER=user                  # Nome do usuário do PostgreSQL
+      - PG_PASSWORD=password          # Senha do PostgreSQL
+      - PG_DATABASE=reservas          # Nome do banco de dados
+      - JWT_SECRET=ticketsafejwt      # Segredo JWT (troque por um valor seguro em produção)
+    ports:
+      - "5001:5001"
+    depends_on:
+      - postgres
+      - redis
+    command: >
+      bash -c "until nc -z -v -w30 postgres 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done; npm start"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.08'
+          memory: '0.2GB'
+    
+
+  # Payment Service
+  payment_service:
+    hostname: payment_service
+    build:
+      context: ./container-servico-pagamento
+      dockerfile: Dockerfile
+    image: public.ecr.aws/j7t2e9b9/ticket-safe:payment-service-latest
+    environment:
+      - PORT=5002
+      - REDIS_HOST=redis       # Nome do serviço Redis definido no docker-compose
+      - REDIS_PORT=6379               # Porta do Redis
+      - PG_HOST=postgres      # Nome do serviço PostgreSQL definido no docker-compose
+      - PG_PORT=5432                  # Porta do PostgreSQL
+      - PG_USER=user                  # Nome do usuário do PostgreSQL
+      - PG_PASSWORD=password          # Senha do PostgreSQL
+      - PG_DATABASE=reservas          # Nome do banco de dados
+      - JWT_SECRET=ticketsafejwt      # Segredo JWT (troque por um valor seguro em produção)
+    ports:
+      - "5002:5002"
+    depends_on:
+      - postgres
+      - redis    
+    command: >
+      bash -c "until nc -z -v -w30 postgres 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done; npm start"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.08'
+          memory: '0.2GB'
+    
+
+  # Reserve Service01
+  reserve01:
+    hostname: reserve01
+    container_name: reserve01
+    build:
+      context: ./container-servico-reserva
+      dockerfile: Dockerfile
+    image: public.ecr.aws/j7t2e9b9/ticket-safe:reserve-service-latest
+    environment:
+      - PORT=9501
+      - REDIS_HOST=redis       # Nome do serviço Redis definido no docker-compose
+      - REDIS_PORT=6379               # Porta do Redis
+      - PG_HOST=postgres      # Nome do serviço PostgreSQL definido no docker-compose
+      - PG_PORT=5432                  # Porta do PostgreSQL
+      - PG_USER=user                  # Nome do usuário do PostgreSQL
+      - PG_PASSWORD=password          # Senha do PostgreSQL
+      - PG_DATABASE=reservas          # Nome do banco de dados
+      - JWT_SECRET=ticketsafejwt      # Segredo JWT (troque por um valor seguro em produção)
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "9501:9501"      
+    command: >
+      bash -c "until nc -z -v -w30 postgres 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done; npm start"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: '0.5GB'
+    
+
+
+  # Reserve Service02
+  reserve02:
+    hostname: reserve02
+    container_name: reserve02
+    build:
+      context: ./container-servico-reserva
+      dockerfile: Dockerfile
+    image: public.ecr.aws/j7t2e9b9/ticket-safe:reserve-service-latest
+    environment:
+      - PORT=9502
+      - REDIS_HOST=redis       # Nome do serviço Redis definido no docker-compose
+      - REDIS_PORT=6379               # Porta do Redis
+      - PG_HOST=postgres      # Nome do serviço PostgreSQL definido no docker-compose
+      - PG_PORT=5432                  # Porta do PostgreSQL
+      - PG_USER=user                  # Nome do usuário do PostgreSQL
+      - PG_PASSWORD=password          # Senha do PostgreSQL
+      - PG_DATABASE=reservas          # Nome do banco de dados
+      - JWT_SECRET=ticketsafejwt      # Segredo JWT (troque por um valor seguro em produção)
+    depends_on:
+      - postgres
+      - redis     
+    ports:
+      - "9502:9502"           
+    command: >
+      bash -c "until nc -z -v -w30 postgres 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done; npm start"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: '0.5GB'
+
+
+  # Reserve Service03
+  reserve03:
+    hostname: reserve03
+    container_name: reserve03
+    build:
+      context: ./container-servico-reserva
+      dockerfile: Dockerfile
+    image: public.ecr.aws/j7t2e9b9/ticket-safe:reserve-service-latest
+    environment:
+      - PORT=9503
+      - REDIS_HOST=redis       # Nome do serviço Redis definido no docker-compose
+      - REDIS_PORT=6379               # Porta do Redis
+      - PG_HOST=postgres      # Nome do serviço PostgreSQL definido no docker-compose
+      - PG_PORT=5432                  # Porta do PostgreSQL
+      - PG_USER=user                  # Nome do usuário do PostgreSQL
+      - PG_PASSWORD=password          # Senha do PostgreSQL
+      - PG_DATABASE=reservas          # Nome do banco de dados
+      - JWT_SECRET=ticketsafejwt      # Segredo JWT (troque por um valor seguro em produção)
+    depends_on:
+      - postgres
+      - redis     
+    ports:
+      - "9503:9503"           
+    command: >
+      bash -c "until nc -z -v -w30 postgres 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done; npm start"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: '0.5GB'
+        
+    
+  # Worker Cancel Service
+  worker_cancel:
+    build:
+      context: ./container-servico-workercancel
+      dockerfile: Dockerfile  
+    image: public.ecr.aws/j7t2e9b9/ticket-safe:cancel-worker-latest
+    environment:
+      - PORT=5003
+      - REDIS_HOST=redis       # Nome do serviço Redis definido no docker-compose
+      - REDIS_PORT=6379               # Porta do Redis
+      - PG_HOST=postgres      # Nome do serviço PostgreSQL definido no docker-compose
+      - PG_PORT=5432                  # Porta do PostgreSQL
+      - PG_USER=user                  # Nome do usuário do PostgreSQL
+      - PG_PASSWORD=password          # Senha do PostgreSQL
+      - PG_DATABASE=reservas          # Nome do banco de dados
+      - JWT_SECRET=ticketsafejwt      # Segredo JWT (troque por um valor seguro em produção)
+    depends_on:
+      - postgres
+      - redis 
+    ports:
+      - "5003:5003"           
+    command: >
+      bash -c "until nc -z -v -w30 postgres 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done; npm start"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.08'
+          memory: '0.2GB'
+    
+
+  # Worker Confirmation Service
+  worker_confirmation:
+    build:
+      context: ./container-servico-workerconfirm
+      dockerfile: Dockerfile  
+    image: public.ecr.aws/j7t2e9b9/ticket-safe:confirmation-worker-latest
+    environment:
+      - PORT=5004
+      - REDIS_HOST=redis       # Nome do serviço Redis definido no docker-compose
+      - REDIS_PORT=6379               # Porta do Redis
+      - PG_HOST=postgres      # Nome do serviço PostgreSQL definido no docker-compose
+      - PG_PORT=5432                  # Porta do PostgreSQL
+      - PG_USER=user                  # Nome do usuário do PostgreSQL
+      - PG_PASSWORD=password          # Senha do PostgreSQL
+      - PG_DATABASE=reservas          # Nome do banco de dados
+      - JWT_SECRET=ticketsafejwt      # Segredo JWT (troque por um valor seguro em produção)
+    depends_on:
+      - postgres
+      - redis    
+    ports:
+      - "5004:5004"         
+    command: >
+      bash -c "until nc -z -v -w30 postgres 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done; npm start"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.08'
+          memory: '0.2GB'
+    
+
+  # Worker Reserve Retry
+  worker_reserve_retry:
+    build:
+      context: ./container-servico-workerReserverRetry
+      dockerfile: Dockerfile  
+    image: public.ecr.aws/j7t2e9b9/ticket-safe:retry-worker-latest
+    environment:
+      - PORT=5005
+      - REDIS_HOST=redis       # Nome do serviço Redis definido no docker-compose
+      - REDIS_PORT=6379               # Porta do Redis
+      - PG_HOST=postgres      # Nome do serviço PostgreSQL definido no docker-compose
+      - PG_PORT=5432                  # Porta do PostgreSQL
+      - PG_USER=user                  # Nome do usuário do PostgreSQL
+      - PG_PASSWORD=password          # Senha do PostgreSQL
+      - PG_DATABASE=reservas          # Nome do banco de dados
+      - JWT_SECRET=ticketsafejwt      # Segredo JWT (troque por um valor seguro em produção)
+    depends_on:
+      - postgres
+      - redis    
+    ports:
+      - "5005:5005"       
+    command: >
+      bash -c "until nc -z -v -w30 postgres 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done; npm start"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.08'
+          memory: '0.2GB'
+    
+
+  # Worker Sync Service
+  worker_sync:
+    build:
+      context: ./container-servico-workersync
+      dockerfile: Dockerfile
+    image: public.ecr.aws/j7t2e9b9/ticket-safe:sync-service-latest
+    environment:
+      - PORT=5006
+      - REDIS_HOST=redis       # Nome do serviço Redis definido no docker-compose
+      - REDIS_PORT=6379               # Porta do Redis
+      - PG_HOST=postgres      # Nome do serviço PostgreSQL definido no docker-compose
+      - PG_PORT=5432                  # Porta do PostgreSQL
+      - PG_USER=user                  # Nome do usuário do PostgreSQL
+      - PG_PASSWORD=password          # Senha do PostgreSQL
+      - PG_DATABASE=reservas          # Nome do banco de dados
+      - JWT_SECRET=ticketsafejwt      # Segredo JWT (troque por um valor seguro em produção)
+    depends_on:
+      - postgres
+      - redis    
+    ports:
+      - "5006:5006"        
+    command: >
+      bash -c "until nc -z -v -w30 postgres 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done; npm start"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.08'
+          memory: '0.2GB'
+    
+
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+
+networks:
+  default:
+    driver: bridge
