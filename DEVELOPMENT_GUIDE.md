@@ -152,9 +152,9 @@ A solução possui 4 serviços expostos via ENDPOINTS para os usuários que são
 ### Após as variáveis definidas inclua nas variáveis de ambiente do Windows um novo Path:
 ```C:\Users\seu-user\git\TicketSafe\implementation\testes de carga\apache-maven-3.9.9-bin\apache-maven-3.9.9\bin```
 
-### Após isso execute o comando **mvn clean install** e aguarde a simulação de carga.
+### Após isso execute o comando ```mvn clean install``` e aguarde a simulação de carga.
 
-### No diretório **/testes de carga/resultados** é mostrado alguns exemplos de capacidade de resposta e tempo de resposta da solução em dois cenários diferentes de escalonamento.
+### No diretório ```/testes de carga/resultados``` é mostrado alguns exemplos de capacidade de resposta e tempo de resposta da solução em dois cenários diferentes de escalonamento.
 ```*Os números mostrados refletem uma maquina própria, a capacidade pode variar dependendo dos recursos disponíveis!```
 
 
