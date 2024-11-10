@@ -146,15 +146,15 @@ Para configurar o ambiente de desenvolvimento do TicketSafe, siga estas etapas:
 3.   Ele define um programa que simula um teste de carga com uma quantidade de requisições simultâneas, o teste dura em média 4 minutos e totaliza aproximadamente 54300 requisições dentro desse período.
 4.   O objetivo principal do teste é demonstrar o comportamento da solução referente ao serviço crítico de Reserva que manipula a quantidade de ingressos disponíveis para cada cliente, sendo esse um problema clássico de concorrência e condição de corrida.
 5.   Para executar o teste localmente abra um terminal no diretório raiz **/gatling-maven-plugin-demo-java-main** e execute os comandos abaixo para configuração de variáveis de ambiente:
-### ```$Env:JAVA_HOME = "C:\Program Files\Java\jdk-17"```
-### ```$Env:PATH = "$Env:JAVA_HOME\bin;$Env:PATH"```
+**```$Env:JAVA_HOME = "C:\Program Files\Java\jdk-17"```**
+**```$Env:PATH = "$Env:JAVA_HOME\bin;$Env:PATH"```**
 
-### Após as variáveis definidas inclua nas variáveis de ambiente do Windows um novo Path:
+**Após as variáveis definidas inclua nas variáveis de ambiente do Windows um novo Path:**
 ```C:\Users\seu-user\git\TicketSafe\implementation\testes de carga\apache-maven-3.9.9-bin\apache-maven-3.9.9\bin```
 
-### Após isso execute o comando ```mvn clean install``` e aguarde a simulação de carga.
+***Após isso execute o comando ```mvn clean install``` e aguarde a simulação de carga.***
 
-### No diretório ```/testes de carga/resultados``` é mostrado alguns exemplos de capacidade de resposta e tempo de resposta da solução em dois cenários diferentes de escalonamento.
+***No diretório ```/testes de carga/resultados``` é mostrado alguns exemplos de capacidade de resposta e tempo de resposta da solução em dois cenários diferentes de escalonamento.***
 ```*Os números mostrados refletem uma maquina própria, a capacidade pode variar dependendo dos recursos disponíveis!```
 
 
