@@ -2,12 +2,12 @@ const Redis = require('ioredis');
 const { Client } = require('pg');  // Importando o cliente PostgreSQL
 
 const redisClient = new Redis({
-    host: process.env.REDIS_HOST || 'redis',
+    host: process.env.REDIS_HOST || 'localhost',
     port: process.env.REDIS_PORT || 6379
 });
 
 const subscriber = new Redis({
-    host: process.env.REDIS_HOST || 'redis',
+    host: process.env.REDIS_HOST || 'localhost',
     port: process.env.REDIS_PORT || 6379
 });
 

@@ -10,7 +10,7 @@ public class ReservaSimulation extends Simulation {
     public ReservaSimulation() {
         // Definindo o protocolo HTTP
         HttpProtocolBuilder httpProtocol = http
-            .baseUrl("http://15.228.177.91:9999")
+            .baseUrl("http://localhost:80")
             .acceptHeader("application/json")
             .contentTypeHeader("application/json");
 
@@ -29,8 +29,14 @@ public class ReservaSimulation extends Simulation {
             reservaScenario.injectOpen(
                 constantUsersPerSec(2).during(Duration.ofSeconds(10)), // 2 usuários por segundo durante 10 segundos
                 constantUsersPerSec(5).during(Duration.ofSeconds(15)).randomized(), // 5 usuários por segundo durante 15 segundos, de forma aleatória
-                rampUsersPerSec(6).to(300).during(Duration.ofMinutes(3)) // Rampa de 6 a 600 usuários por segundo em 3 minutos
+                rampUsersPerSec(6).to(600).during(Duration.ofMinutes(3)) // Rampa de 6 a 600 usuários por segundo em 3 minutos
             )
         ).protocols(httpProtocol); // Aplica o protocolo HTTP
     }
 }
+
+
+// variaveis de ambiente para o JAVA e apache
+
+// $Env:JAVA_HOME = "C:\Program Files\Java\jdk-17"
+// $Env:PATH = "$Env:JAVA_HOME\bin;$Env:PATH"

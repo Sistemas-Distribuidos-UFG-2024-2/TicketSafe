@@ -1,9 +1,9 @@
 {
-  "name": "container-servico-workerreserverretry",
+  "name": "container-servico-workerreserve",
   "version": "1.0.0",
-  "main": "workerretryService.js",
+  "main": "workerReserveService.js",
   "scripts": {
-    "start": "node workerretryService.js", 
+    "start": "node workerReserveService.js", 
 
     "test": "echo \"Error: no test specified\" && exit 1"
   },

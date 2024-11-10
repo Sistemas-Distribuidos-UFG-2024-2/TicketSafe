@@ -2,12 +2,12 @@ const Redis = require('ioredis');
 const { Client } = require('pg'); // Importa o cliente do PostgreSQL
 
 const redisClient = new Redis({
-    host: process.env.REDIS_HOST || 'redis',
+    host: process.env.REDIS_HOST || 'localhost',
     port: process.env.REDIS_PORT || 6379
 });
 
 const subscriber = new Redis({
-    host: process.env.REDIS_HOST || 'redis',
+    host: process.env.REDIS_HOST || 'localhost',
     port: process.env.REDIS_PORT || 6379
 });
 
@@ -61,7 +61,7 @@ const processExpiredReservation = async (reservationKey) => {
     // Publica uma notificação para cada ingresso cancelado
     for (let i = 0; i < quantidade; i++) {
         const message = `reserva_cancelada:${eventoId}:${userId}:${timestamp}:${quantidade}`;
-        transaction.publish('reservas_canceladas', message);
+        transaction.publish('reservas_solicitadas', message);
       }
       
     // Executa a transação no Redis

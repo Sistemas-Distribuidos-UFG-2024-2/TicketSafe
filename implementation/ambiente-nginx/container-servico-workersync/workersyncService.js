@@ -2,7 +2,7 @@ const Redis = require('ioredis');
 const { Client } = require('pg');
 
 const redisClient = new Redis({
-  host: process.env.REDIS_HOST || 'redis',
+  host: process.env.REDIS_HOST || 'localhost',
   port: process.env.REDIS_PORT || 6379
 });
 
@@ -139,5 +139,9 @@ async function sincronizarReservas(eventoId) {
   await Promise.all(deletePromises);
 }
 
-// Executa a sincronização a cada 15 segundos
-setInterval(sincronizarIngressos, 15000);
+async function iniciarSincronizacao() {
+  await sincronizarIngressos();
+  setTimeout(iniciarSincronizacao, 15000);
+}
+
+iniciarSincronizacao();

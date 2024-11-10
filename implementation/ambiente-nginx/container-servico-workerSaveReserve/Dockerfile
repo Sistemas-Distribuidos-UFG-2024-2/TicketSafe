@@ -19,4 +19,4 @@ COPY . .
 EXPOSE 5005
 
 # Comando para iniciar o worker de confirmação
-CMD ["node", "workerretryService.js"]
+CMD ["node", "workersavereserve.js"]

@@ -1,19 +1,20 @@
+
 const Redis = require('ioredis');
 const { Client } = require('pg');  // Importando o cliente PostgreSQL
 
 const redisClient = new Redis({
-    host: process.env.REDIS_HOST || 'redis',
+    host: process.env.REDIS_HOST || 'localhost',
     port: process.env.REDIS_PORT || 6379
 });
 
 const subscriber = new Redis({
-    host: process.env.REDIS_HOST || 'redis',
+    host: process.env.REDIS_HOST || 'localhost',
     port: process.env.REDIS_PORT || 6379
 });
 
-redisClient.on('connect', () => console.log('Worker de Fila de Espera Conectado ao Redis'));
+redisClient.on('connect', () => console.log('Worker para processamento de reservas Conectado ao Redis'));
 subscriber.on('connect', () => {
-    console.log('Worker de Fila de Espera Conectado ao Redis');
+    console.log('Worker para processamento de reservas Conectado ao Redis');
 });
 
 // // Conexão com o PostgreSQL
@@ -30,17 +31,17 @@ subscriber.on('connect', () => {
 //     .catch(err => console.error('Erro ao conectar ao PostgreSQL', err));
 
 // Inscrever-se no canal de reservas canceladas
-subscriber.subscribe('reservas_canceladas', (err, count) => {
+subscriber.subscribe('reservas_solicitadas', (err, count) => {
     if (err) {
-        console.error('Erro ao se inscrever no canal de cancelamentos:', err);
+        console.error('Erro ao se inscrever no canal de reservas:', err);
     } else {
-        console.log(`Agora escutando ${count} canais de cancelamentos.`);
+        console.log(`Agora escutando ${count} canais de reservas.`);
     }
 });
 
 // Handler para reservas canceladas
 subscriber.on('message', async (channel, message) => {
-    console.log(`Notificacao para reserva recebida: ${message}`);
+    console.log(`Notificacao para processamento de reserva recebida: ${message}`);
     // Processa a fila de respera
     await processRetry(message);
 });
@@ -112,3 +113,4 @@ const startWorker = () => {
 };
 
 startWorker();
+

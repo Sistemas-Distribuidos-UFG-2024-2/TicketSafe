@@ -6,21 +6,101 @@ services:
     image: nginx:alpine
     container_name: nginx_load_balancer
     ports:
-      - "9999:9999" # Porta onde o Nginx irá ouvir
+      - "80:80" # Porta onde o Nginx irá ouvir
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf # Arquivo de configuração do Nginx
     depends_on:
       - reserve01
       - reserve02
       - reserve03
+      - reserve04
+      - reserve05
       - auth_service
       - evento_service
       - payment_service
     deploy:
       resources:
         limits: 
-          cpus: '0.25'
+          cpus: '0.10'
           memory: '0.5GB'
+    network_mode: host
+
+  # cadvisor:
+  #   container_name: cadvisor
+  #   image: gcr.io/cadvisor/cadvisor:latest
+  #   ports:
+  #     - "8080:8080"
+  #   volumes: 
+  #     - "/:/rootfs"
+  #     - "/var/run:/var/run"
+  #     - "/sys:/sys"
+  #     - "/var/lib/docker/:/var/lib/docker"
+  #     - "/dev/disk/:/dev/disk"
+  #   privileged: true
+  #   devices: 
+  #     - "/dev/kmsg"
+
+  # prometheus:
+  #   image: prom/prometheus:latest
+  #   container_name: prometheus
+  #   ports:
+  #     - "9090:9090"
+  #   volumes:
+  #     - ./prometheus.yml:/etc/prometheus/prometheus.yml
+  #     - ./alert.rules.yml:/etc/prometheus/alert.rules.yml  # Volume para o arquivo de regras de alerta
+  #   depends_on:
+  #     - cadvisor
+  #     - alertmanager
+
+  # flask_server:
+  #   build:
+  #     context: ./container-servico-scaleflask
+  #     dockerfile: Dockerfile
+  #   container_name: flask_server
+  #   ports:
+  #     - "10000:10000"  # Porta exposta para o servidor Flask
+  #   volumes:
+  #     - ./script_de_escalonamento.sh:/app/script_de_escalonamento.sh  # Volume para o script de escalonamento
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #   environment:
+  #     - DOCKER_HOST=unix:///var/run/docker.sock
+  #   depends_on:
+  #     - cadvisor
+  #     - alertmanager
+  #     - prometheus
+
+  # alertmanager:
+  #   image: prom/alertmanager
+  #   container_name: alertmanager
+  #   ports:
+  #     - "9093:9093"
+  #   volumes:
+  #     - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml
+
+  # kong:
+  #   image: kong:3.1
+  #   container_name: kong
+  #   ports:
+  #     - "9999:8000"  # Porta exposta para as requisições HTTP (API Gateway)
+  #     - "8443:8443"  # Para HTTPS, se necessário
+  #   environment:
+  #     KONG_DATABASE: "off"  # Usando modo sem banco de dados (modo declarativo)
+  #     KONG_PROXY_LISTENER: "0.0.0.0:8000"  # Ouvir em todas as interfaces na porta 8000
+  #     KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml  # Caminho para o arquivo declarativo
+  #   volumes:
+  #     - ./kong.conf:/etc/kong/kong.conf  # Configuração personalizada (opcional)
+  #     - ./kong.yml:/etc/kong/kong.yml  # O arquivo de configuração do Kong
+  #   depends_on:
+  #     - auth_service
+  #     - evento_service
+  #     - payment_service
+  #     - reserve01
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: '0.25'
+  #         memory: '0.5GB'
+
 
   # PostgreSQL Service
   postgres:
@@ -38,8 +118,9 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.5'
+          cpus: '0.10'
           memory: '1.0GB'
+    network_mode: host          
     
 
   # Redis Service
@@ -48,11 +129,11 @@ services:
       context: ./container-servico-redis
       dockerfile: Dockerfile
     container_name: redis
-    image: public.ecr.aws/j7t2e9b9/ticket-safe:redis-sync-latest
+    image: ticket-safe:redis-sync-latest
     ports:
       - "6379:6379"
     environment:
-      PG_HOST: postgres 
+      PG_HOST: localhost 
       PG_PORT: 5432
       PG_USER: user
       PG_PASSWORD: password
@@ -65,13 +146,14 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '0.08'
-          memory: '0.3GB'
+          cpus: '0.25'
+          memory: '0.5GB'
     depends_on:
       - postgres
     command: >
-      bash -c "until nc -z -v -w30 postgres 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done;
+      bash -c "until nc -z -v -w30 localhost 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done;
       redis-server /usr/local/etc/redis/redis.conf"
+    network_mode: host          
     
 
 
@@ -82,12 +164,12 @@ services:
     build:
       context: ./container-servico-auth
       dockerfile: Dockerfile
-    image: public.ecr.aws/j7t2e9b9/ticket-safe:auth-service-latest
+    image: ticket-safe:auth-service-latest
     environment:
       - PORT=5000
-      - REDIS_HOST=redis       # Nome do serviço Redis definido no docker-compose
+      - REDIS_HOST=localhost       # Nome do serviço Redis definido no docker-compose
       - REDIS_PORT=6379               # Porta do Redis
-      - PG_HOST=postgres      # Nome do serviço PostgreSQL definido no docker-compose
+      - PG_HOST=localhost      # Nome do serviço PostgreSQL definido no docker-compose
       - PG_PORT=5432                  # Porta do PostgreSQL
       - PG_USER=user                  # Nome do usuário do PostgreSQL
       - PG_PASSWORD=password          # Senha do PostgreSQL
@@ -99,13 +181,15 @@ services:
       - postgres
       - redis
     command: >
-      bash -c "until nc -z -v -w30 postgres 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done; npm start"
+      bash -c "until nc -z -v -w30 localhost 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done; npm start"
     deploy:
       resources:
         limits:
-          cpus: '0.08'
+          cpus: '0.03'
           memory: '0.2GB'
+    network_mode: host          
     
+
 
   # Evento Service
   evento_service:
@@ -113,12 +197,12 @@ services:
     build:
       context: ./container-servico-eventos
       dockerfile: Dockerfile  
-    image: public.ecr.aws/j7t2e9b9/ticket-safe:evento-service-latest
+    image: ticket-safe:evento-service-latest
     environment:
       - PORT=5001
-      - REDIS_HOST=redis       # Nome do serviço Redis definido no docker-compose
+      - REDIS_HOST=localhost       # Nome do serviço Redis definido no docker-compose
       - REDIS_PORT=6379               # Porta do Redis
-      - PG_HOST=postgres      # Nome do serviço PostgreSQL definido no docker-compose
+      - PG_HOST=localhost      # Nome do serviço PostgreSQL definido no docker-compose
       - PG_PORT=5432                  # Porta do PostgreSQL
       - PG_USER=user                  # Nome do usuário do PostgreSQL
       - PG_PASSWORD=password          # Senha do PostgreSQL
@@ -130,13 +214,15 @@ services:
       - postgres
       - redis
     command: >
-      bash -c "until nc -z -v -w30 postgres 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done; npm start"
+      bash -c "until nc -z -v -w30 localhost 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done; npm start"
     deploy:
       resources:
         limits:
-          cpus: '0.08'
+          cpus: '0.03'
           memory: '0.2GB'
+    network_mode: host          
     
+
 
   # Payment Service
   payment_service:
@@ -144,12 +230,12 @@ services:
     build:
       context: ./container-servico-pagamento
       dockerfile: Dockerfile
-    image: public.ecr.aws/j7t2e9b9/ticket-safe:payment-service-latest
+    image: ticket-safe:payment-service-latest
     environment:
       - PORT=5002
-      - REDIS_HOST=redis       # Nome do serviço Redis definido no docker-compose
+      - REDIS_HOST=localhost       # Nome do serviço Redis definido no docker-compose
       - REDIS_PORT=6379               # Porta do Redis
-      - PG_HOST=postgres      # Nome do serviço PostgreSQL definido no docker-compose
+      - PG_HOST=localhost      # Nome do serviço PostgreSQL definido no docker-compose
       - PG_PORT=5432                  # Porta do PostgreSQL
       - PG_USER=user                  # Nome do usuário do PostgreSQL
       - PG_PASSWORD=password          # Senha do PostgreSQL
@@ -161,13 +247,15 @@ services:
       - postgres
       - redis    
     command: >
-      bash -c "until nc -z -v -w30 postgres 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done; npm start"
+      bash -c "until nc -z -v -w30 localhost 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done; npm start"
     deploy:
       resources:
         limits:
-          cpus: '0.08'
+          cpus: '0.03'
           memory: '0.2GB'
+    network_mode: host          
     
+
 
   # Reserve Service01
   reserve01:
@@ -176,107 +264,194 @@ services:
     build:
       context: ./container-servico-reserva
       dockerfile: Dockerfile
-    image: public.ecr.aws/j7t2e9b9/ticket-safe:reserve-service-latest
+    image: ticket-safe:reserve-service-latest
     environment:
       - PORT=9501
-      - REDIS_HOST=redis       # Nome do serviço Redis definido no docker-compose
+      - REDIS_HOST=localhost       # Nome do serviço Redis definido no docker-compose
       - REDIS_PORT=6379               # Porta do Redis
-      - PG_HOST=postgres      # Nome do serviço PostgreSQL definido no docker-compose
+      - PG_HOST=localhost      # Nome do serviço PostgreSQL definido no docker-compose
       - PG_PORT=5432                  # Porta do PostgreSQL
       - PG_USER=user                  # Nome do usuário do PostgreSQL
       - PG_PASSWORD=password          # Senha do PostgreSQL
       - PG_DATABASE=reservas          # Nome do banco de dados
       - JWT_SECRET=ticketsafejwt      # Segredo JWT (troque por um valor seguro em produção)
+      - CLUSTER=true
+      - CLUSTER_WORKERS=6
     depends_on:
       - postgres
       - redis
     ports:
       - "9501:9501"      
     command: >
-      bash -c "until nc -z -v -w30 postgres 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done; npm start"
+      bash -c "until nc -z -v -w30 localhost 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done; npm start"
     deploy:
       resources:
         limits:
-          cpus: '0.25'
+          cpus: '0.10'
           memory: '0.5GB'
+    network_mode: host          
     
 
 
-  # Reserve Service02
+
+  # Reserve Service01
   reserve02:
     hostname: reserve02
     container_name: reserve02
     build:
       context: ./container-servico-reserva
       dockerfile: Dockerfile
-    image: public.ecr.aws/j7t2e9b9/ticket-safe:reserve-service-latest
+    image: ticket-safe:reserve-service-latest
     environment:
       - PORT=9502
-      - REDIS_HOST=redis       # Nome do serviço Redis definido no docker-compose
+      - REDIS_HOST=localhost       # Nome do serviço Redis definido no docker-compose
       - REDIS_PORT=6379               # Porta do Redis
-      - PG_HOST=postgres      # Nome do serviço PostgreSQL definido no docker-compose
+      - PG_HOST=localhost      # Nome do serviço PostgreSQL definido no docker-compose
       - PG_PORT=5432                  # Porta do PostgreSQL
       - PG_USER=user                  # Nome do usuário do PostgreSQL
       - PG_PASSWORD=password          # Senha do PostgreSQL
       - PG_DATABASE=reservas          # Nome do banco de dados
       - JWT_SECRET=ticketsafejwt      # Segredo JWT (troque por um valor seguro em produção)
+      - CLUSTER=true
+      - CLUSTER_WORKERS=6
     depends_on:
       - postgres
-      - redis     
+      - redis
     ports:
-      - "9502:9502"           
+      - "9502:9502"      
     command: >
-      bash -c "until nc -z -v -w30 postgres 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done; npm start"
+      bash -c "until nc -z -v -w30 localhost 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done; npm start"
     deploy:
       resources:
         limits:
-          cpus: '0.25'
+          cpus: '0.10'
           memory: '0.5GB'
+    network_mode: host          
+    
 
 
-  # Reserve Service03
+
+  # Reserve Service01
   reserve03:
     hostname: reserve03
     container_name: reserve03
     build:
       context: ./container-servico-reserva
       dockerfile: Dockerfile
-    image: public.ecr.aws/j7t2e9b9/ticket-safe:reserve-service-latest
+    image: ticket-safe:reserve-service-latest
     environment:
       - PORT=9503
-      - REDIS_HOST=redis       # Nome do serviço Redis definido no docker-compose
+      - REDIS_HOST=localhost       # Nome do serviço Redis definido no docker-compose
       - REDIS_PORT=6379               # Porta do Redis
-      - PG_HOST=postgres      # Nome do serviço PostgreSQL definido no docker-compose
+      - PG_HOST=localhost      # Nome do serviço Po9501stgreSQL definido no docker-compose
       - PG_PORT=5432                  # Porta do PostgreSQL
       - PG_USER=user                  # Nome do usuário do PostgreSQL
       - PG_PASSWORD=password          # Senha do PostgreSQL
       - PG_DATABASE=reservas          # Nome do banco de dados
       - JWT_SECRET=ticketsafejwt      # Segredo JWT (troque por um valor seguro em produção)
+      - CLUSTER=true
+      - CLUSTER_WORKERS=6
     depends_on:
       - postgres
-      - redis     
+      - redis
     ports:
-      - "9503:9503"           
+      - "9503:9503"      
     command: >
-      bash -c "until nc -z -v -w30 postgres 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done; npm start"
+      bash -c "until nc -z -v -w30 localhost 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done; npm start"
     deploy:
       resources:
         limits:
-          cpus: '0.25'
+          cpus: '0.10'
           memory: '0.5GB'
-        
+    network_mode: host          
+    
+
+  # Reserve Service01
+  reserve04:
+    hostname: reserve04
+    container_name: reserve04
+    build:
+      context: ./container-servico-reserva
+      dockerfile: Dockerfile
+    image: ticket-safe:reserve-service-latest
+    environment:
+      - PORT=9504
+      - REDIS_HOST=localhost       # Nome do serviço Redis definido no docker-compose
+      - REDIS_PORT=6379               # Porta do Redis
+      - PG_HOST=localhost      # Nome do serviço Po9501stgreSQL definido no docker-compose
+      - PG_PORT=5432                  # Porta do PostgreSQL
+      - PG_USER=user                  # Nome do usuário do PostgreSQL
+      - PG_PASSWORD=password          # Senha do PostgreSQL
+      - PG_DATABASE=reservas          # Nome do banco de dados
+      - JWT_SECRET=ticketsafejwt      # Segredo JWT (troque por um valor seguro em produção)
+      - CLUSTER=true
+      - CLUSTER_WORKERS=6
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "9504:9504"      
+    command: >
+      bash -c "until nc -z -v -w30 localhost 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done; npm start"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.10'
+          memory: '0.5GB'
+    network_mode: host          
+    
+
+
+  # Reserve Service01
+  reserve05:
+    hostname: reserve05
+    container_name: reserve05
+    build:
+      context: ./container-servico-reserva
+      dockerfile: Dockerfile
+    image: ticket-safe:reserve-service-latest
+    environment:
+      - PORT=9505
+      - REDIS_HOST=localhost       # Nome do serviço Redis definido no docker-compose
+      - REDIS_PORT=6379               # Porta do Redis
+      - PG_HOST=localhost      # Nome do serviço Po9501stgreSQL definido no docker-compose
+      - PG_PORT=5432                  # Porta do PostgreSQL
+      - PG_USER=user                  # Nome do usuário do PostgreSQL
+      - PG_PASSWORD=password          # Senha do PostgreSQL
+      - PG_DATABASE=reservas          # Nome do banco de dados
+      - JWT_SECRET=ticketsafejwt      # Segredo JWT (troque por um valor seguro em produção)
+      - CLUSTER=true
+      - CLUSTER_WORKERS=6
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "9505:9505"      
+    command: >
+      bash -c "until nc -z -v -w30 localhost 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done; npm start"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.10'
+          memory: '0.5GB'
+    network_mode: host          
+    
+
+
+
+
     
   # Worker Cancel Service
   worker_cancel:
     build:
       context: ./container-servico-workercancel
       dockerfile: Dockerfile  
-    image: public.ecr.aws/j7t2e9b9/ticket-safe:cancel-worker-latest
+    image: ticket-safe:cancel-worker-latest
     environment:
       - PORT=5003
-      - REDIS_HOST=redis       # Nome do serviço Redis definido no docker-compose
+      - REDIS_HOST=localhost       # Nome do serviço Redis definido no docker-compose
       - REDIS_PORT=6379               # Porta do Redis
-      - PG_HOST=postgres      # Nome do serviço PostgreSQL definido no docker-compose
+      - PG_HOST=localhost      # Nome do serviço PostgreSQL definido no docker-compose
       - PG_PORT=5432                  # Porta do PostgreSQL
       - PG_USER=user                  # Nome do usuário do PostgreSQL
       - PG_PASSWORD=password          # Senha do PostgreSQL
@@ -288,25 +463,27 @@ services:
     ports:
       - "5003:5003"           
     command: >
-      bash -c "until nc -z -v -w30 postgres 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done; npm start"
+      bash -c "until nc -z -v -w30 localhost 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done; npm start"
     deploy:
       resources:
         limits:
-          cpus: '0.08'
+          cpus: '0.03'
           memory: '0.2GB'
+    network_mode: host          
     
+
 
   # Worker Confirmation Service
   worker_confirmation:
     build:
       context: ./container-servico-workerconfirm
       dockerfile: Dockerfile  
-    image: public.ecr.aws/j7t2e9b9/ticket-safe:confirmation-worker-latest
+    image: ticket-safe:confirmation-worker-latest
     environment:
       - PORT=5004
-      - REDIS_HOST=redis       # Nome do serviço Redis definido no docker-compose
+      - REDIS_HOST=localhost       # Nome do serviço Redis definido no docker-compose
       - REDIS_PORT=6379               # Porta do Redis
-      - PG_HOST=postgres      # Nome do serviço PostgreSQL definido no docker-compose
+      - PG_HOST=localhost      # Nome do serviço PostgreSQL definido no docker-compose
       - PG_PORT=5432                  # Porta do PostgreSQL
       - PG_USER=user                  # Nome do usuário do PostgreSQL
       - PG_PASSWORD=password          # Senha do PostgreSQL
@@ -318,25 +495,27 @@ services:
     ports:
       - "5004:5004"         
     command: >
-      bash -c "until nc -z -v -w30 postgres 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done; npm start"
+      bash -c "until nc -z -v -w30 localhost 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done; npm start"
     deploy:
       resources:
         limits:
-          cpus: '0.08'
+          cpus: '0.03'
           memory: '0.2GB'
+    network_mode: host          
     
 
-  # Worker Reserve Retry
-  worker_reserve_retry:
+
+  # Worker save reserve
+  worker-save-reserve:
     build:
-      context: ./container-servico-workerReserverRetry
+      context: ./container-servico-workerSaveReserve
       dockerfile: Dockerfile  
-    image: public.ecr.aws/j7t2e9b9/ticket-safe:retry-worker-latest
+    image: ticket-safe:save-worker-latest
     environment:
       - PORT=5005
-      - REDIS_HOST=redis       # Nome do serviço Redis definido no docker-compose
+      - REDIS_HOST=localhost       # Nome do serviço Redis definido no docker-compose
       - REDIS_PORT=6379               # Porta do Redis
-      - PG_HOST=postgres      # Nome do serviço PostgreSQL definido no docker-compose
+      - PG_HOST=localhost      # Nome do serviço PostgreSQL definido no docker-compose
       - PG_PORT=5432                  # Porta do PostgreSQL
       - PG_USER=user                  # Nome do usuário do PostgreSQL
       - PG_PASSWORD=password          # Senha do PostgreSQL
@@ -348,12 +527,13 @@ services:
     ports:
       - "5005:5005"       
     command: >
-      bash -c "until nc -z -v -w30 postgres 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done; npm start"
+      bash -c "until nc -z -v -w30 localhost 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done; npm start"
     deploy:
       resources:
         limits:
-          cpus: '0.08'
+          cpus: '0.03'
           memory: '0.2GB'
+    network_mode: host          
     
 
   # Worker Sync Service
@@ -361,12 +541,12 @@ services:
     build:
       context: ./container-servico-workersync
       dockerfile: Dockerfile
-    image: public.ecr.aws/j7t2e9b9/ticket-safe:sync-service-latest
+    image: ticket-safe:sync-service-latest
     environment:
       - PORT=5006
-      - REDIS_HOST=redis       # Nome do serviço Redis definido no docker-compose
+      - REDIS_HOST=localhost       # Nome do serviço Redis definido no docker-compose
       - REDIS_PORT=6379               # Porta do Redis
-      - PG_HOST=postgres      # Nome do serviço PostgreSQL definido no docker-compose
+      - PG_HOST=localhost      # Nome do serviço PostgreSQL definido no docker-compose
       - PG_PORT=5432                  # Porta do PostgreSQL
       - PG_USER=user                  # Nome do usuário do PostgreSQL
       - PG_PASSWORD=password          # Senha do PostgreSQL
@@ -378,12 +558,43 @@ services:
     ports:
       - "5006:5006"        
     command: >
-      bash -c "until nc -z -v -w30 postgres 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done; npm start"
+      bash -c "until nc -z -v -w30 localhost 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done; npm start"
     deploy:
       resources:
         limits:
-          cpus: '0.08'
+          cpus: '0.03'
           memory: '0.2GB'
+    network_mode: host          
+
+  # Worker process Reserve 
+  worker-reserve:
+    build:
+      context: ./container-servico-workerReserve
+      dockerfile: Dockerfile  
+    image: ticket-safe:reserve-worker-latest
+    environment:
+      - PORT=5007
+      - REDIS_HOST=localhost       # Nome do serviço Redis definido no docker-compose
+      - REDIS_PORT=6379               # Porta do Redis
+      - PG_HOST=localhost      # Nome do serviço PostgreSQL definido no docker-compose
+      - PG_PORT=5432                  # Porta do PostgreSQL
+      - PG_USER=user                  # Nome do usuário do PostgreSQL
+      - PG_PASSWORD=password          # Senha do PostgreSQL
+      - PG_DATABASE=reservas          # Nome do banco de dados
+      - JWT_SECRET=ticketsafejwt      # Segredo JWT (troque por um valor seguro em produção)
+    depends_on:
+      - postgres
+      - redis    
+    ports:
+      - "5007:5007"       
+    command: >
+      bash -c "until nc -z -v -w30 localhost 5432; do echo 'Waiting for PostgreSQL...'; sleep 5; done; npm start"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.03'
+          memory: '0.2GB'
+    network_mode: host          
     
 
 volumes:
@@ -391,7 +602,3 @@ volumes:
     driver: local
   redis-data:
     driver: local
-
-networks:
-  default:
-    driver: bridge
