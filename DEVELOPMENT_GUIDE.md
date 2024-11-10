@@ -136,38 +136,38 @@ A solução possui 4 serviços expostos via ENDPOINTS para os usuários que são
 2.   Caso queira modificar o código e esse processo inclua novas dependencias certifique de incluir essas dependencias no arquivo **package.json** encontrado na raiz do diretório do container.
 3.   Após incluir as dependencias prossiga digitando o comando (npm install) na raiz do diretório do container, para que as novas dependencias sejam incluidas no arquivo **package-lock.json**.
 4.   Para incluir um novo serviço crie um novo diretório com o nome do container (container-servico-nomeservico) e certifique que dentro dele você tenha a estrutura: ('nomeservico.js', 'Dockerfile', 'package-lock.json', 'package.json').
-5.   Geralmente os primeiros arquivos criados serão : 'Dockerfile' e 'nomeservico.js', após os dois definidos você digita o comando (npm init) para iniciar a criação do 'package.json' e com isso incluir as dependencias necessárias e prosseguir com o comando (npm install), caso queira após a instalação remova o diretório (node-modules).
+5.   Geralmente os primeiros arquivos criados serão : 'Dockerfile' e 'nomeservico.js', após os dois definidos você digita o comando (npm init) para iniciar a criação do 'package.json' e com isso incluir as dependencias necessárias e prosseguir com o comando (npm install), caso queira após a instalação remova o diretório ```node-modules```.
 6.   Em processos de inclusão de novos serviços certifique de declarar tambem no arquivo **'docker-compose.yml'** encontrado na raiz do diretório **'ambiente-nginx'**, revise tambem o arquivo **'nginx.conf'** durante esse processo.
 
 
 ## Sessão guia para testes de carga com Gatling (Windows)
 1.   Certifique de ter a versão 17 do Java Sdk instalada.
-2.   Seguindo o caminho de diretórios **/implementation/testes de carga/gatling-maven-plugin-demo-java-main/src/test/java/io/gatling/demo** você encontrará o arquivo ReservaSimulation.java.
+2.   Seguindo o caminho de diretórios ```/implementation/testes de carga/gatling-maven-plugin-demo-java-main/src/test/java/io/gatling/demo``` você encontrará o arquivo ReservaSimulation.java.
 3.   Ele define um programa que simula um teste de carga com uma quantidade de requisições simultâneas, o teste dura em média 4 minutos e totaliza aproximadamente 54300 requisições dentro desse período.
 4.   O objetivo principal do teste é demonstrar o comportamento da solução referente ao serviço crítico de Reserva que manipula a quantidade de ingressos disponíveis para cada cliente, sendo esse um problema clássico de concorrência e condição de corrida.
 5.   Para executar o teste localmente abra um terminal no diretório raiz **/gatling-maven-plugin-demo-java-main** e execute os comandos abaixo para configuração de variáveis de ambiente:
-'$Env:JAVA_HOME = "C:\Program Files\Java\jdk-17"'
-'$Env:PATH = "$Env:JAVA_HOME\bin;$Env:PATH"'
+### ```$Env:JAVA_HOME = "C:\Program Files\Java\jdk-17"```
+### ```$Env:PATH = "$Env:JAVA_HOME\bin;$Env:PATH"```
 
-Após as variáveis definidas inclua nas variáveis de ambiente do Windows um novo Path:
-"C:\Users\seu-user\git\TicketSafe\implementation\testes de carga\apache-maven-3.9.9-bin\apache-maven-3.9.9\bin"
+### Após as variáveis definidas inclua nas variáveis de ambiente do Windows um novo Path:
+```C:\Users\seu-user\git\TicketSafe\implementation\testes de carga\apache-maven-3.9.9-bin\apache-maven-3.9.9\bin```
 
-Após isso execute o comando **mvn clean install** e aguarde a simulação de carga.
+### Após isso execute o comando **mvn clean install** e aguarde a simulação de carga.
 
-No diretório **/testes de carga/resultados** é mostrado alguns exemplos de capacidade de resposta e tempo de resposta da solução em dois cenários diferentes de escalonamento.
-*Os números mostrados refletem uma maquina própria, a capacidade pode variar dependendo dos recursos disponíveis!
+### No diretório **/testes de carga/resultados** é mostrado alguns exemplos de capacidade de resposta e tempo de resposta da solução em dois cenários diferentes de escalonamento.
+```*Os números mostrados refletem uma maquina própria, a capacidade pode variar dependendo dos recursos disponíveis!```
 
 
 ## Sessão com alguns comandos utilizados durante o desenvolvimento e testes da solução.
-1.   **docker compose up --build** (Compilar imagens e executar o compose da solução)
-2.   **docker compose down**  (Destruir containeres criados)
-3.   **docker volume prune**  (Remover volumes não utilizados por containeres)
-4.   **docker volume rm $(docker volume ls -q)**  (Remover todos os volumes)
-5.   **docker rmi $(docker images -q)**  (Remover todas as imagens de containeres)
-6.   **docker stats** (Monitorar containeres/serviços ativos e consumindo recursos)
-7.   **docker exec -it nome-container /bin/bash** (Acessar localmente o container)
-8.   **npm install** 
-9.   **npm init** 
+1.   ```docker compose up --build``` (Compilar imagens e executar o compose da solução)
+2.   ```docker compose down```  (Destruir containeres criados)
+3.   ```docker volume prune```  (Remover volumes não utilizados por containeres)
+4.   ```docker volume rm $(docker volume ls -q)```  (Remover todos os volumes)
+5.   ```docker rmi $(docker images -q)```  (Remover todas as imagens de containeres)
+6.   ```docker stats``` (Monitorar containeres/serviços ativos e consumindo recursos)
+7.   ```docker exec -it nome-container /bin/bash``` (Acessar localmente o container)
+8.   ```npm install``` 
+9.   ```npm init``` 
 
 ## Sessão com alguns comandos do banco REDIS
 1.   Dentro do container do redis execute **(redis-cli)** para acessar o cliente/banco redis no terminal.
