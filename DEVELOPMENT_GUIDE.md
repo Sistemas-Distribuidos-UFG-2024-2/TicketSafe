@@ -2,44 +2,45 @@
 
 ## Introdução ao Guia do Desenvolvimento
 
-   Este guia tem como objetivo fornecer uma visão geral do processo de desenvolvimento do sistema TicketSafe, detalhando as etapas, tecnologias e práticas recomendadas a serem seguidas durante o desenvolvimento.
+Este guia tem como objetivo fornecer uma visão geral do processo de desenvolvimento do sistema TicketSafe, detalhando as etapas, tecnologias e práticas recomendadas a serem seguidas durante o desenvolvimento.
 
 ## Estrutura do Projeto
 
-   O projeto TicketSafe é organizado nas seguintes pastas principais:  
-     
--  **/discipline\_exercises**: Contém atividades relacionadas a disciplina Sistemas Distribuídos, na qual o projeto em questão se baseia.
--  **/docs**: Inclui documentação, diagramas e informações adicionais ou relevantes sobre o projeto.
--  **/implementation**: Inclui o repositorio com o ambiente atual de desenvolvimento da solução, necessário para deploy dos componentes criados ou que forem alterados.
+O projeto TicketSafe é organizado nas seguintes pastas principais:
+
+- **/discipline_exercises**: Contém atividades relacionadas à disciplina Sistemas Distribuídos, na qual o projeto em questão se baseia.
+- **/docs**: Inclui documentação, diagramas e informações adicionais ou relevantes sobre o projeto.
+- **/implementation**: Inclui o repositório com o ambiente atual de desenvolvimento da solução, necessário para deploy dos componentes criados ou que forem alterados.
 
 ## Configuração do Ambiente de Desenvolvimento
 
-   Para configurar o ambiente de desenvolvimento do TicketSafe, siga estas etapas:  
-   
-## Configurando e inicializando o ambiente da solução localmente.
-1.   Inicialmente acesse o diretório **/implementation/ambiente-nginx**, ele será o ambiente principal usado para as demonstrações da disciplina.
-2.   Certifique de ter o Docker instalado na sua máquina. versão(4.32) em diante.
-3.   Caso esteja no Windows abra o Docker Desktop e ative o 'network hosting mode' navegando em Settings -> Resources -> Network - (Enable host networking).
-4.   Com o terminal aberto nesse mesmo diretório digite o comando (docker compose up --build) para fazer o build dos containeres e já iniciar o ambiente da solução.
-5.   Com todos os containeres em execução o Nginx já será capaz de fazer o balanceamento de carga e proxy das rotas de cada serviço, na próxima sessão será mostrado como é feito o acesso em cada rota.
+Para configurar o ambiente de desenvolvimento do TicketSafe, siga estas etapas:
+
+### Configurando e inicializando o ambiente da solução localmente.
+
+1. Inicialmente, acesse o diretório **/implementation/ambiente-nginx**, ele será o ambiente principal usado para as demonstrações da disciplina.
+2. Certifique-se de ter o Docker instalado na sua máquina (versão 4.32 em diante).
+3. Caso esteja no Windows, abra o Docker Desktop e ative o 'network hosting mode' navegando em **Settings -> Resources -> Network** - (Enable host networking).
+4. Com o terminal aberto nesse mesmo diretório, digite o comando `docker compose up --build` para fazer o build dos containers e já iniciar o ambiente da solução.
+5. Com todos os containers em execução, o Nginx já será capaz de fazer o balanceamento de carga e proxy das rotas de cada serviço. Na próxima sessão, será mostrado como é feito o acesso em cada rota.
 
 ## Rotas e Serviços
 
 **Serviços:**
-Serviço de banco 'postgres'
-Serviço de banco cache 'redis' (container-servico-redis)
-Serviço de autenticação 'auth_service' (container-servico-auth)
-Serviço para gerenciamento de eventos 'evento_service' (container-servico-eventos)
-Serviço para simular confirmação de pagamento 'payment_service' (container-servico-pagamento)
-Serviço para solicitação de reserva de ingressos 'reserve01...02...03..' (container-servico-reserva)
-Serviço Worker para salvar uma requisição de reserva feito no 'reserve01' em uma fila ordenada (container-servico-workerSaveReserve)
-Serviço Worker para consumir a fila ordenada de solicitações de reserva e efetuar a reserva de fato (container-servico-workerReserve)
-Serviço Worker para consumir cancelamentos de reservas de ingressos 'worker_cancel' (container-servico-workercancel)
-Serviço Worker para consumir confirmações de reservas de ingressos 'worker_confirmation' (container-servico-workerconfirm)
-Serviço Worker para consumir confirmações de reservas de ingressos 'worker_confirmation' (container-servico-workerconfirm)
-Serviço Worker para sincronização do banco em cache Redis com um banco relacional Postgresql (container-servico-workersync)
 
-A declaração dos serviços no docker-compose inclui uma sessão deploy:resources para limitação de utilização de CPU e MEMÓRIA a fim de controlar as simulações de teste de carga e escalonamento manual de serviços.
+1. Serviço de banco 'postgres'
+2. Serviço de banco cache 'redis' (container-servico-redis)
+3. Serviço de autenticação 'auth_service' (container-servico-auth)
+4. Serviço para gerenciamento de eventos 'evento_service' (container-servico-eventos)
+5. Serviço para simular confirmação de pagamento 'payment_service' (container-servico-pagamento)
+6. Serviço para solicitação de reserva de ingressos 'reserve01...02...03..' (container-servico-reserva)
+7. Serviço Worker para salvar uma requisição de reserva feita no 'reserve01' em uma fila ordenada (container-servico-workerSaveReserve)
+8. Serviço Worker para consumir a fila ordenada de solicitações de reserva e efetuar a reserva de fato (container-servico-workerReserve)
+9. Serviço Worker para consumir cancelamentos de reservas de ingressos 'worker_cancel' (container-servico-workercancel)
+10. Serviço Worker para consumir confirmações de reservas de ingressos 'worker_confirmation' (container-servico-workerconfirm)
+11. Serviço Worker para sincronização do banco em cache Redis com um banco relacional Postgresql (container-servico-workersync)
+
+A declaração dos serviços no docker-compose inclui uma sessão `deploy:resources` para limitação de utilização de CPU e MEMÓRIA, a fim de controlar as simulações de teste de carga e escalonamento manual de serviços.
 
 **Rotas:**
 A solução possui 4 serviços expostos via ENDPOINTS para os usuários que são:
@@ -54,7 +55,7 @@ A solução possui 4 serviços expostos via ENDPOINTS para os usuários que são
  }'"
  
    Comando curl rota POST /auth/login: 
-   "curl --location 'http://localhost:9999/auth/login' \
+   "curl --location 'http://localhost/auth/login' \
 --header 'Content-Type: application/json' \
 --data '{
     "username": "seu-user",
