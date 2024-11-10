@@ -40,10 +40,10 @@ Para configurar o ambiente de desenvolvimento do TicketSafe, siga estas etapas:
 10. Serviço Worker para consumir confirmações de reservas de ingressos 'worker_confirmation' ```container-servico-workerconfirm```
 11. Serviço Worker para sincronização do banco em cache Redis com um banco relacional Postgresql ```container-servico-workersync```
 
-A declaração dos serviços no docker-compose inclui uma sessão `deploy:resources` para limitação de utilização de CPU e MEMÓRIA, a fim de controlar as simulações de teste de carga e escalonamento manual de serviços.
+### A declaração dos serviços no docker-compose inclui uma sessão `deploy:resources` para limitação de utilização de CPU e MEMÓRIA, a fim de controlar as simulações de teste de carga e escalonamento manual de serviços.
 
 **Rotas:**
-A solução possui 4 serviços expostos via ENDPOINTS para os usuários que são:
+```A solução possui 4 serviços expostos via ENDPOINTS para os usuários que são```:
 
 ### **auth_service:**
 - **Comando curl rota POST /auth/cadastrar:**
