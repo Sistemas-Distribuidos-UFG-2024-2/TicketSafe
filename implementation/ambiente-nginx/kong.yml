@@ -1,0 +1,49 @@
+_format_version: "2.1"
+services:
+  - name: auth-service
+    url: http://auth_service:5000
+    routes:
+      - name: auth-route
+        paths:
+          - /auth
+        methods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+
+  - name: evento-service
+    url: http://evento_service:5001
+    routes:
+      - name: evento-route
+        paths:
+          - /eventos
+        methods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+
+  - name: payment-service
+    url: http://payment_service:5002
+    routes:
+      - name: payment-route
+        paths:
+          - /pagamentos
+        methods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+
+  - name: reserve-service
+    url: http://reserve_service:9501
+    routes:
+      - name: reserve-route
+        paths:
+          - /ingressos
+        methods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
