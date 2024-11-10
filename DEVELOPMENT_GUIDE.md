@@ -48,31 +48,31 @@ A solução possui 4 serviços expostos via ENDPOINTS para os usuários que são
 ### **auth_service:**
 - **Comando curl rota POST /auth/cadastrar:**
 ``` 
-   "curl --location 'http://localhost/auth/cadastrar' \
+   curl --location 'http://localhost/auth/cadastrar' \
 --header 'Content-Type: application/json' \
 --data '{
     "username": "seu-user",
     "password": "sua-senha"
- }'"
+ }'
 ```
 - **Comando curl rota POST /auth/login:**
 ```
-   "curl --location 'http://localhost/auth/login' \
+   curl --location 'http://localhost/auth/login' \
 --header 'Content-Type: application/json' \
 --data '{
     "username": "seu-user",
     "password": "sua-senha"
- }'"
+ }'
 ```
-**evento_service**
+### **evento_service**
 - **Comando curl rota POST /eventos/cadastrar:**
 ```
-   "curl --location 'http://localhost/eventos/cadastrar' \
+   curl --location 'http://localhost/eventos/cadastrar' \
 --header 'Content-Type: application/json' \
 --data '{
     "nome": "show_bruno_mars",
     "ingressosDisponiveis": "1000000"
- }'"
+ }'
 ```
 - **Comando curl rota DELETE /eventos/excluir:**
 ```
@@ -84,51 +84,51 @@ A solução possui 4 serviços expostos via ENDPOINTS para os usuários que são
 ```
 - **Comando curl rota PUT /eventos/atualizar:**
 ```
-   "curl --location --request PUT 'http://localhost/eventos/atualizar' \
+   curl --location --request PUT 'http://localhost/eventos/atualizar' \
 --header 'Content-Type: application/json' \
 --data '{
     "id": 1,
     "ingressosDisponiveis": 10
 }
-'"
+'
 ```
 - **Comando curl rota GET /eventos/listar:**
 ```
    "curl --location 'http://localhost/eventos/listar'"
 ```
-**payment_service**
+### **payment_service**
 - **Comando curl rota POST /pagamentos/confirmar:**
 ```
-   "curl --location 'http://localhost/pagamentos/confirmar' \
+   curl --location 'http://localhost/pagamentos/confirmar' \
 --header 'Content-Type: application/json' \
 --data '{
     "eventoId": "1", 
     "timestamp": "1730766936901",
     "userId": "cec44660-96c6-4d9b-b97e-05f42b27a925",
     "quantidade":"1"
-}'"
+}'
 ```
-**reserve_service**
+### **reserve_service**
 - **Comando curl rota POST /ingressos/reservar:**
 ```
-   "curl --location 'http://localhost/ingressos/reservar' \
+   curl --location 'http://localhost/ingressos/reservar' \
 --header 'Content-Type: application/json' \
 --data '{
     "eventoId": "1",
     "quantidade":"1",
     "userId": "cec44660-96c6-4d9b-b97e-05f42b27a925"
-}'"
+}'
 ```
 - **Comando curl rota POST /ingressos/cancelar:**
 ```
-   "curl --location 'http://localhost/ingressos/cancelar' \
+   curl --location 'http://localhost/ingressos/cancelar' \
 --header 'Content-Type: application/json' \
 --data '{
     "eventoId": "1",
     "quantidade":"1",
     "userId": "cec44660-96c6-4d9b-b97e-05f42b27a925",
     "timestamp":"1731083967441"
-}'"
+}'
 ```
 
 ## Inclusão de novos serviços ou modificação dos serviços atuais
@@ -188,7 +188,7 @@ No diretório **/testes de carga/resultados** é mostrado alguns exemplos de cap
 * Docker
 * Gatling (java 17)
 
-   ### Frontend
+  ### Frontend
 
 * 
 
