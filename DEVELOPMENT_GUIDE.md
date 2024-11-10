@@ -29,16 +29,16 @@ Para configurar o ambiente de desenvolvimento do TicketSafe, siga estas etapas:
 **Serviços:**
 
 1. Serviço de banco 'postgres'
-2. Serviço de banco cache 'redis' (container-servico-redis)
-3. Serviço de autenticação 'auth_service' (container-servico-auth)
-4. Serviço para gerenciamento de eventos 'evento_service' (container-servico-eventos)
-5. Serviço para simular confirmação de pagamento 'payment_service' (container-servico-pagamento)
-6. Serviço para solicitação de reserva de ingressos 'reserve01...02...03..' (container-servico-reserva)
-7. Serviço Worker para salvar uma requisição de reserva feita no 'reserve01' em uma fila ordenada (container-servico-workerSaveReserve)
-8. Serviço Worker para consumir a fila ordenada de solicitações de reserva e efetuar a reserva de fato (container-servico-workerReserve)
-9. Serviço Worker para consumir cancelamentos de reservas de ingressos 'worker_cancel' (container-servico-workercancel)
-10. Serviço Worker para consumir confirmações de reservas de ingressos 'worker_confirmation' (container-servico-workerconfirm)
-11. Serviço Worker para sincronização do banco em cache Redis com um banco relacional Postgresql (container-servico-workersync)
+2. Serviço de banco cache 'redis' ```container-servico-redis```
+3. Serviço de autenticação 'auth_service' ```container-servico-auth```
+4. Serviço para gerenciamento de eventos 'evento_service' ```container-servico-eventos```
+5. Serviço para simular confirmação de pagamento 'payment_service' ```container-servico-pagamento```
+6. Serviço para solicitação de reserva de ingressos 'reserve01...02...03..' ```container-servico-reserva```
+7. Serviço Worker para salvar uma requisição de reserva feita no 'reserve01' em uma fila ordenada ```container-servico-workerSaveReserve```
+8. Serviço Worker para consumir a fila ordenada de solicitações de reserva e efetuar a reserva de fato ```container-servico-workerReserve```
+9. Serviço Worker para consumir cancelamentos de reservas de ingressos 'worker_cancel' ```container-servico-workercancel```
+10. Serviço Worker para consumir confirmações de reservas de ingressos 'worker_confirmation' ```container-servico-workerconfirm```
+11. Serviço Worker para sincronização do banco em cache Redis com um banco relacional Postgresql ```container-servico-workersync```
 
 A declaração dos serviços no docker-compose inclui uma sessão `deploy:resources` para limitação de utilização de CPU e MEMÓRIA, a fim de controlar as simulações de teste de carga e escalonamento manual de serviços.
 
