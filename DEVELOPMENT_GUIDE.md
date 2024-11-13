@@ -34,9 +34,9 @@ Para configurar o ambiente de desenvolvimento do TicketSafe, siga estas etapas:
 4. Serviço para gerenciamento de eventos 'evento_service' ```container-servico-eventos```
 5. Serviço para simular confirmação de pagamento 'payment_service' ```container-servico-pagamento```
 6. Serviço para solicitação de reserva de ingressos 'reserve01...02...03..' ```container-servico-reserva```
-7. Serviço Worker para salvar uma requisição de reserva feita no 'reserve01' em uma fila ordenada ```container-servico-workerSaveReserve```
-8. Serviço Worker para consumir a fila ordenada de solicitações de reserva e efetuar a reserva de fato ```container-servico-workerReserve```
-9. Serviço Worker para consumir cancelamentos de reservas de ingressos 'worker_cancel' ```container-servico-workercancel```
+7. Serviço Worker para processar o Stream de requisições de reservas a fim de tentar realizar a reserva do usuário ```container-servico-workerSaveReserve```
+8. Serviço Worker para consumir a fila ordenada de solicitações de reserva pendentes a fim de realizar a reserva do usuário ```container-servico-workerReserveWaiting```
+9. Serviço Worker para consumir cancelamentos ou expirações de reservas de ingressos 'worker_cancel' ```container-servico-workercancel```
 10. Serviço Worker para consumir confirmações de reservas de ingressos 'worker_confirmation' ```container-servico-workerconfirm```
 11. Serviço Worker para sincronização do banco em cache Redis com um banco relacional Postgresql ```container-servico-workersync```
 
