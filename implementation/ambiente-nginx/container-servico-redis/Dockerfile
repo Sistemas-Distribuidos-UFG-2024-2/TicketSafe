@@ -1,5 +1,5 @@
 # Use a imagem base oficial do Redis
-FROM redis:6.0
+FROM redis:6.2
 
 # Atualiza a lista de pacotes e instala o netcat-openbsd (uma versão do netcat)
 RUN apt-get update && apt-get install -y netcat-openbsd

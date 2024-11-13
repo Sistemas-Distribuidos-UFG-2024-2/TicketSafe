@@ -1,7 +1,8 @@
 # Usar uma imagem base do Node.js
-FROM node:14
+FROM node:18
 
-RUN apt-get update && apt-get install -y netcat
+# Instalar netcat-openbsd
+RUN apt-get update && apt-get install -y netcat-openbsd
 
 # Definir o diretório de trabalho
 WORKDIR /app

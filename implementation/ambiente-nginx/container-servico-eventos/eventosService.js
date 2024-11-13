@@ -113,8 +113,8 @@ app.put('/eventos/atualizar', async (req, res) => {
     
     // Publica uma notificação para cada ingresso disponível
     for (let i = 0; i < ingressosDisponiveis; i++) {
-      const message = `reserva_cancelada:${id}:${""}:${""}:${""}`;
-      transaction.publish('reservas_canceladas', message);
+      const message = `ingressos_atualizados:${id}:${""}:${""}:${""}`;
+      transaction.publish('reservas_solicitadas', message);
     }
     
     // Executa a transação no Redis

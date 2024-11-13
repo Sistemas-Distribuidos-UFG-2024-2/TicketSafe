@@ -1,18 +1,10 @@
 const express = require('express');
-const Redis = require('ioredis');
 const { Client } = require('pg');
 const bcrypt = require('bcryptjs'); // Altere de bcrypt para bcryptjs
 const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const app = express();
 app.use(express.json());
-
-const redisClient = new Redis({
-  host: process.env.REDIS_HOST || 'localhost',
-  port: process.env.REDIS_PORT || 6379
-});
-
-redisClient.on('connect', () => console.log('Conectado ao Redis'));
 
 // Configurações do PostgreSQL
 const pgClient = new Client({

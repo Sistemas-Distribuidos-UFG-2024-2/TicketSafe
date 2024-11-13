@@ -1,309 +1,149 @@
 const Redis = require('ioredis');
-const { Client } = require('pg');  // Importando o cliente PostgreSQL
 
 const redisClient = new Redis({
     host: process.env.REDIS_HOST || 'localhost',
     port: process.env.REDIS_PORT || 6379
 });
 
-const subscriber = new Redis({
-    host: process.env.REDIS_HOST || 'localhost',
-    port: process.env.REDIS_PORT || 6379
-});
+redisClient.on('connect', () => console.log('Worker Save Reserve conectado ao Redis'));
 
-redisClient.on('connect', () => console.log('Worker de Fila de Espera Conectado ao Redis'));
-subscriber.on('connect', () => {
-    console.log('Worker de Fila de Espera Conectado ao Redis');
-});
+const streamKey = 'reservas_pendentes';
+const groupName = 'save_reserve_group';
+const consumerName = process.env.CONSUMER_ID;
 
-// // Conexão com o PostgreSQL
-// const pgClient = new Client({
-//     host: process.env.PG_HOST || 'postgres',
-//     port: process.env.PG_PORT || 5432,
-//     user: process.env.PG_USER || 'user',
-//     password: process.env.PG_PASSWORD || 'password',
-//     database: process.env.PG_DATABASE || 'reservas'
-// });
+const script = `
+-- Verifica e realiza claim de mensagens seguras para processamento
 
-// pgClient.connect()
-//     .then(() => console.log('Conectado ao PostgreSQL'))
-//     .catch(err => console.error('Erro ao conectar ao PostgreSQL', err));
+local eventoKey = KEYS[1]
+local processingKey = KEYS[2]
+local quantidade = tonumber(ARGV[1])
+local reservationKey = ARGV[2]
+local expireTime = tonumber(ARGV[3])
+local waitingListKey = KEYS[3]
+local waitingRequest = ARGV[4]
+local streamKey = KEYS[4]
+local idRequest = ARGV[5]
+local groupName = ARGV[6]
 
-// Inscrever-se no canal de reservas canceladas
-subscriber.subscribe('reservas_canceladas', (err, count) => {
-    if (err) {
-        console.error('Erro ao se inscrever no canal de cancelamentos:', err);
-    } else {
-        console.log(`Agora escutando ${count} canais de cancelamentos.`);
-    }
-});
+-- Verifica a disponibilidade de ingressos
+local quantidadeDisponivel = tonumber(redis.call('GET', eventoKey))
 
-// Handler para reservas canceladas
-subscriber.on('message', async (channel, message) => {
-    console.log(`Notificacao de aviso de reserva recebida: ${message}`);
-    // Processa a fila de respera
-    await processRetry(message);
-});
+if quantidadeDisponivel and quantidadeDisponivel >= quantidade then
+    -- Decrementa e cria a reserva
+    redis.call('DECRBY', eventoKey, quantidade)
+    redis.call('HSET', reservationKey, 'dummy', '')
+    redis.call('EXPIRE', reservationKey, expireTime)
 
-// Função para processar a fila de espera
-const processRetry = async (message) => {
-    const [_, eventoId, userId, timestamp, quantidade] = message.split(':');
-    // Processar a fila de espera para o evento
-    await processWaitingList(eventoId, userId, quantidade);
-};
+    -- Registra a mensagem como processada
+    redis.call('HDEL', processingKey, idRequest)
+    redis.call('XACK', streamKey, groupName, idRequest)
+    return 1
+else
+    -- Mensagem em fila de espera
+    redis.call('LPUSH', waitingListKey, waitingRequest)
+    redis.call('HDEL', processingKey, idRequest)
+    redis.call('XACK', streamKey, groupName, idRequest)
+    return 0
+end
+`;
 
-// Função para processar a fila de espera
-const processWaitingList = async (eventoId, userId, quantidade) => {
+async function processStreamRequests(eventoId, userId, quantidade, idRequest) {
+    const timestamp = Date.now();
+    const reservationKey = `reserva:${eventoId}:${userId}:${timestamp}:${quantidade}`;
+    const waitingListKey = `fila_espera:${eventoId}`;
+    const waitingRequest = JSON.stringify({ userId, quantidade });
+    const processingKey = 'processing_messages';
+
     try {
-        await redisClient.lpush(`fila_espera:${eventoId}`, JSON.stringify({ userId, quantidade }));
-        const message = `reserva_solicitada:${eventoId}:${userId}:${""}:${quantidade}`;
-        await redisClient.publish('reservas_solicitadas', message);
+        const result = await redisClient.eval(script, 4,
+            `evento:${eventoId}:ingressosDisponiveis`,
+            processingKey,
+            waitingListKey,
+            streamKey,
+            quantidade,
+            reservationKey,
+            600,
+            waitingRequest,
+            idRequest,
+            groupName
+        );
 
-        console.log("Reserva salva em ordem na fila de reservas!")
-  
+        if (result === 1) {
+            console.log(`Reserva realizada para o usuário ${userId} do evento ${eventoId} com ${quantidade} ingressos.`);
+        } else if (result === 0) {
+            console.log(`Ingressos insuficientes. Reserva adicionada à fila de espera.`);
+        }
     } catch (error) {
-        console.error('Erro ao tentar incluir a reserva na fila de reservas!:', err);
+        console.error('Erro ao tentar incluir solicitação de reserva:', error);
+        console.log(`Falha ao tentar reservar o ingresso, tente novamente mais tarde!`);
+    }
+}
+
+async function callProcessStream(idRequest, fields) {
+    const eventoId = fields[fields.indexOf('eventoId') + 1];
+    const userId = fields[fields.indexOf('userId') + 1];
+    const quantidade = fields[fields.indexOf('quantidade') + 1];
+    await processStreamRequests(eventoId, userId, quantidade, idRequest);
+}
+
+const listenToStream = async () => {
+    try {
+        try {
+            await redisClient.xgroup('CREATE', streamKey, groupName, '0', 'MKSTREAM');
+            console.log(`Grupo de consumidores '${groupName}' criado no stream '${streamKey}'.`);
+        } catch (err) {
+            if (!err.message.includes('BUSYGROUP')) {
+                console.error('Erro ao criar o grupo de consumidores:', err);
+            }
+        }
+
+        while (true) {
+            const processingKey = 'processing_messages';
+
+            const autoclaimResult = await redisClient.xautoclaim(
+                streamKey, groupName, consumerName, 43200000, '0-0', 'COUNT', 1
+            );
+
+            const [, claimedMessages] = autoclaimResult || [];
+
+            if (claimedMessages && claimedMessages.length > 0) {
+                for (const [idRequest, fields] of claimedMessages) {
+                    const isAlreadyProcessing = await redisClient.hexists(processingKey, idRequest);
+
+                    if (!isAlreadyProcessing) {
+                        await redisClient.hset(processingKey, idRequest, Date.now());
+                        callProcessStream(idRequest, fields);
+                    }
+                }
+            } else {
+                const result = await redisClient.xreadgroup(
+                    'GROUP', groupName, consumerName,
+                    'COUNT', 1,
+                    'STREAMS', streamKey, '>'
+                );
+
+                if (result && result.length > 0) {
+                    for (const [stream, messages] of result) {
+                        for (const [idRequest, fields] of messages) {
+                            const isAlreadyProcessing = await redisClient.hexists(processingKey, idRequest);
+
+                            if (!isAlreadyProcessing) {
+                                await redisClient.hset(processingKey, idRequest, Date.now());
+                                callProcessStream(idRequest, fields);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Erro ao ouvir o stream:', error);
     }
 };
 
-
-
-// Inicia o worker
 const startWorker = () => {
-    // Outros processos de inicialização, se necessário
+    listenToStream();
+    console.log('Worker iniciado e ouvindo o stream de reservas canceladas.');
 };
 
 startWorker();
-
-
-
-
-
-
-
-
-
-
-// OPÇÃO USANDO STREAMS
-
-
-// const Redis = require('ioredis');
-// const { Client } = require('pg');  // Importando o cliente PostgreSQL
-
-// const redisClient = new Redis({
-//   host: process.env.REDIS_HOST || 'redis',
-//   port: process.env.REDIS_PORT || 6379
-// });
-
-// // Verifica se o grupo de consumidores já existe e cria se necessário
-// async function ensureConsumerGroup() {
-//   try {
-//     await redisClient.xgroup('CREATE', 'reservas_stream', 'reservas_consumer_group', '0', 'MKSTREAM');
-//   } catch (error) {
-//     if (!error.message.includes('BUSYGROUP')) {
-//       console.error('Erro ao criar grupo de consumidores:', error);
-//     }
-//   }
-// }
-
-// // Função para processar mensagens do stream
-// async function processStreamMessages() {
-//   try {
-//     const result = await redisClient.xreadgroup(
-//       'GROUP', 'reservas_consumer_group', 'reservas_worker',
-//       'BLOCK', 0,               // Bloqueia até novas mensagens chegarem
-//       'COUNT', 10,              // Limita o processamento a 10 mensagens por vez
-//       'STREAMS', 'reservas_stream', '>'
-//     );
-
-//     if (result) {
-//       for (const [stream, messages] of result) {
-//         for (const [id, fields] of messages) {
-//           const data = {};
-//           for (let i = 0; i < fields.length; i += 2) {
-//             data[fields[i]] = fields[i + 1];
-//           }
-
-//           const { eventoId, userId, quantidade } = data;
-//           await processWaitingList(eventoId, userId, quantidade);
-
-//           // Marca a mensagem como processada
-//           await redisClient.xack('reservas_stream', 'reservas_consumer_group', id);
-//         }
-//       }
-//     }
-//   } catch (error) {
-//     console.error('Erro ao processar mensagens do stream:', error);
-//   }
-// }
-
-// // Função para processar a reserva
-// async function processWaitingList(eventoId, userId, quantidade) {
-//   const waitingListKey = `fila_espera:${eventoId}`;
-//   const transaction = redisClient.multi();
-  
-//   transaction.decrby(`evento:${eventoId}:ingressosDisponiveis`, quantidade);
-//   const results = await transaction.exec();
-//   const ingressosRestantes = results[0];
-
-//   if (ingressosRestantes[1] >= 0) {
-//     const timestamp = Date.now();
-//     const reservationKey = `reserva:${eventoId}:${userId}:${timestamp}:${quantidade}`;
-//     const pipeline = redisClient.pipeline();
-//     pipeline.hset(reservationKey, 'dummy', '');
-//     pipeline.expire(reservationKey, 600);
-//     await pipeline.exec();
-
-//     console.log(`Reserva realizada para o usuário ${userId} do evento ${eventoId} com ${quantidade} ingressos.`);
-//   } else {
-//     const revertTransaction = redisClient.multi();
-//     revertTransaction.incrby(`evento:${eventoId}:ingressosDisponiveis`, quantidade);
-//     await revertTransaction.exec();
-
-//     console.log(`Ingressos insuficientes para o usuário ${userId} - reserva devolvida à fila.`);
-//   }
-// }
-
-// // Função para iniciar o worker e garantir o grupo de consumidores
-// async function startWorker() {
-//   await ensureConsumerGroup();
-
-//   while (true) {
-//     await processStreamMessages();
-//   }
-// }
-
-// startWorker();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// versao possível worker retry
-
-
-// const Redis = require('ioredis');
-// const { Client } = require('pg');  // Importando o cliente PostgreSQL
-
-// const redisClient = new Redis({
-//     host: process.env.REDIS_HOST || 'localhost',
-//     port: process.env.REDIS_PORT || 6379
-// });
-
-// const subscriber = new Redis({
-//     host: process.env.REDIS_HOST || 'localhost',
-//     port: process.env.REDIS_PORT || 6379
-// });
-
-// redisClient.on('connect', () => console.log('Worker de Fila de Espera Conectado ao Redis'));
-// subscriber.on('connect', () => {
-//     console.log('Worker de Fila de Espera Conectado ao Redis');
-// });
-
-// // // Conexão com o PostgreSQL
-// // const pgClient = new Client({
-// //     host: process.env.PG_HOST || 'postgres',
-// //     port: process.env.PG_PORT || 5432,
-// //     user: process.env.PG_USER || 'user',
-// //     password: process.env.PG_PASSWORD || 'password',
-// //     database: process.env.PG_DATABASE || 'reservas'
-// // });
-
-// // pgClient.connect()
-// //     .then(() => console.log('Conectado ao PostgreSQL'))
-// //     .catch(err => console.error('Erro ao conectar ao PostgreSQL', err));
-
-// // Inscrever-se no canal de reservas canceladas
-// subscriber.subscribe('reservas_canceladas', (err, count) => {
-//     if (err) {
-//         console.error('Erro ao se inscrever no canal de cancelamentos:', err);
-//     } else {
-//         console.log(`Agora escutando ${count} canais de cancelamentos.`);
-//     }
-// });
-
-// // Handler para reservas canceladas
-// subscriber.on('message', async (channel, message) => {
-//     console.log(`Notificacao para reserva recebida: ${message}`);
-//     // Processa a fila de respera
-//     await processRetry(message);
-// });
-
-// // Função para processar a fila de espera
-// const processRetry = async (message) => {
-//     const [_, eventoId, userId, timestamp, quantidade] = message.split(':');
-//     // Processar a fila de espera para o evento
-//     await processWaitingList(eventoId);
-// };
-
-// // Função para processar a fila de espera
-// const processWaitingList = async (eventoId) => {
-//     const waitingListKey = `fila_espera:${eventoId}`;
-
-//     // Verifica se há tentativas de reserva na fila
-//     const waitingRequest = await redisClient.rpop(waitingListKey);
-//     if (waitingRequest) {
-//         const { userId, quantidade } = JSON.parse(waitingRequest);
-
-//         // Iniciar transação
-//         const transaction = redisClient.multi();
-
-//         // Decrementa os ingressos disponíveis
-//         transaction.decrby(`evento:${eventoId}:ingressosDisponiveis`, quantidade);
-        
-//         // Executa a transação
-//         const results = await transaction.exec();
-//         const ingressosRestantes = results[0];
-
-//         if (ingressosRestantes[1]  >= 0) {
-//             // Se ingressos foram suficientes, conclui a reserva
-//             const timestamp = Date.now();
-//             const reservationKey = `reserva:${eventoId}:${userId}:${timestamp}:${quantidade}`;
-
-//             // Pipelining Redis operations
-//             const pipeline = redisClient.pipeline();
-//             pipeline.hset(reservationKey, 'dummy', '');
-//             pipeline.expire(reservationKey, 600);
-//             await pipeline.exec();
-
-//             // // Salvar a reserva no banco de dados
-//             // await pgClient.query(
-//             //     'INSERT INTO reservas(evento_id, user_id, quantidade, timestamp, pagamento_efetuado) VALUES ($1, $2, $3, $4, $5)',
-//             //     [eventoId, userId, quantidade, timestamp, 0]
-//             // );
-
-//             console.log(`Reserva realizada para o usuário ${userId} do evento ${eventoId} com ${quantidade} ingressos.`);
-//         } else {
-//             // Caso quantidade de ingressos seja insuficiente, iniciar nova transação para reverter
-//             const revertTransaction = redisClient.multi();
-//             revertTransaction.incrby(`evento:${eventoId}:ingressosDisponiveis`, quantidade);
-//             revertTransaction.rpush(waitingListKey, waitingRequest);
-//             await revertTransaction.exec();
-
-//             console.log(`Ingressos insuficientes para o usuário ${userId} - reserva devolvida à fila.`);
-//             // Reinsere a tentativa de reserva na fila
-//         }
-//     } else {
-//         console.log('Fila de espera vazia, nenhuma tentativa de reserva a processar.');
-//     }
-// };
-
-
-
-// // Inicia o worker
-// const startWorker = () => {
-//     // Outros processos de inicialização, se necessário
-// };
-
-// startWorker();
-
