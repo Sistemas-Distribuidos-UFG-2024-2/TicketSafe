@@ -15,7 +15,7 @@ const script = `
 -- Verifica e realiza claim de mensagens seguras para processamento
 
 local eventoKey = KEYS[1]
-local processingKey = KEYS[2]
+local lockKey = KEYS[2]
 local quantidade = tonumber(ARGV[1])
 local reservationKey = ARGV[2]
 local expireTime = tonumber(ARGV[3])
@@ -35,29 +35,29 @@ if quantidadeDisponivel and quantidadeDisponivel >= quantidade then
     redis.call('EXPIRE', reservationKey, expireTime)
 
     -- Registra a mensagem como processada
-    redis.call('HDEL', processingKey, idRequest)
+    redis.call('DEL', lockKey)
     redis.call('XACK', streamKey, groupName, idRequest)
     return 1
 else
     -- Mensagem em fila de espera
     redis.call('LPUSH', waitingListKey, waitingRequest)
-    redis.call('HDEL', processingKey, idRequest)
+    redis.call('DEL', lockKey)
     redis.call('XACK', streamKey, groupName, idRequest)
     return 0
 end
 `;
 
-async function processStreamRequests(eventoId, userId, quantidade, idRequest) {
+async function processStreamRequests(eventoId, userId, quantidade, idRequest, lockKey) {
     const timestamp = Date.now();
     const reservationKey = `reserva:${eventoId}:${userId}:${timestamp}:${quantidade}`;
     const waitingListKey = `fila_espera:${eventoId}`;
     const waitingRequest = JSON.stringify({ userId, quantidade });
-    const processingKey = 'processing_messages';
+
 
     try {
         const result = await redisClient.eval(script, 4,
             `evento:${eventoId}:ingressosDisponiveis`,
-            processingKey,
+            lockKey,
             waitingListKey,
             streamKey,
             quantidade,
@@ -79,12 +79,13 @@ async function processStreamRequests(eventoId, userId, quantidade, idRequest) {
     }
 }
 
-async function callProcessStream(idRequest, fields) {
+async function callProcessStream(idRequest, fields, lockKey) {
     const eventoId = fields[fields.indexOf('eventoId') + 1];
     const userId = fields[fields.indexOf('userId') + 1];
     const quantidade = fields[fields.indexOf('quantidade') + 1];
-    await processStreamRequests(eventoId, userId, quantidade, idRequest);
+    await processStreamRequests(eventoId, userId, quantidade, idRequest, lockKey);
 }
+const lockTTL = 300; // Expiração do lock em segundos - 5 minutos
 
 const listenToStream = async () => {
     try {
@@ -98,8 +99,6 @@ const listenToStream = async () => {
         }
 
         while (true) {
-            const processingKey = 'processing_messages';
-
             const autoclaimResult = await redisClient.xautoclaim(
                 streamKey, groupName, consumerName, 43200000, '0-0', 'COUNT', 1
             );
@@ -108,11 +107,14 @@ const listenToStream = async () => {
 
             if (claimedMessages && claimedMessages.length > 0) {
                 for (const [idRequest, fields] of claimedMessages) {
-                    const isAlreadyProcessing = await redisClient.hexists(processingKey, idRequest);
+                    const lockKey = `lock:${idRequest}`;
+                    //lock distribuido
+                    const lockAcquired = await redisClient.set(lockKey, idRequest, 'NX', 'EX', lockTTL); //NX - só define a chave se nao existir, EX - tempo de expiração da chave
 
-                    if (!isAlreadyProcessing) {
-                        await redisClient.hset(processingKey, idRequest, Date.now());
-                        callProcessStream(idRequest, fields);
+                    if (lockAcquired) {
+                        await callProcessStream(idRequest, fields, lockKey);
+                    } else {
+                        console.log(`O item ${idRequest} já está sendo processado.`);
                     }
                 }
             } else {
@@ -125,11 +127,14 @@ const listenToStream = async () => {
                 if (result && result.length > 0) {
                     for (const [stream, messages] of result) {
                         for (const [idRequest, fields] of messages) {
-                            const isAlreadyProcessing = await redisClient.hexists(processingKey, idRequest);
+                            const lockKey = `lock:${idRequest}`;
 
-                            if (!isAlreadyProcessing) {
-                                await redisClient.hset(processingKey, idRequest, Date.now());
-                                callProcessStream(idRequest, fields);
+                            const lockAcquired = await redisClient.set(lockKey, idRequest, 'NX', 'EX', lockTTL);
+        
+                            if (lockAcquired) {
+                                await callProcessStream(idRequest, fields, lockKey);
+                            } else {
+                                console.log(`O item ${idRequest} já está sendo processado.`);
                             }
                         }
                     }
