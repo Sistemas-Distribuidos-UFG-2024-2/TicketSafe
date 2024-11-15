@@ -58,7 +58,7 @@ async function sincronizarRedisComPostgres() {
 
       if (pagamento_efetuado === 1) {
         // Se o pagamento foi efetuado, recria a reserva e notifica o worker de confirmação
-        await redisClient.hset(reservationKey, 'dummy', ''); // Cria um hash com um campo "dummy"
+        await redisClient.hset(reservationKey, 'pagamento_efetuado', 'true'); // Cria um hash com um campo "dummy"
         console.log(`Reserva confirmada recriada para o evento ${evento_id}.`);
         // Enviar notificação para o worker de confirmação
         await redisClient.publish('reservas_confirmadas', reservationKey);
@@ -66,7 +66,7 @@ async function sincronizarRedisComPostgres() {
         // Se o pagamento não foi efetuado, recria a reserva com o tempo de expiração
         if (expirationTime > currentTime.getTime()) {
           const remainingTime = expirationTime - currentTime.getTime();
-          await redisClient.hset(reservationKey, 'dummy', ''); // Cria um hash com um campo "dummy"
+          await redisClient.hset(reservationKey, 'pagamento_efetuado', 'false'); // Cria um hash com um campo "dummy"
           await redisClient.expire(reservationKey, Math.ceil(remainingTime / 1000)); // Define o tempo de expiração
           console.log(`Reserva não paga recriada com expiração de ${Math.ceil(remainingTime / 1000)} segundos para o evento ${evento_id}.`);
         } else {
