@@ -31,7 +31,7 @@ local quantidadeDisponivel = tonumber(redis.call('GET', eventoKey))
 if quantidadeDisponivel and quantidadeDisponivel >= quantidade then
     -- Decrementa e cria a reserva
     redis.call('DECRBY', eventoKey, quantidade)
-    redis.call('HSET', reservationKey, 'dummy', '')
+    redis.call('HSET', reservationKey, 'pagamento_efetuado', 'false')
     redis.call('EXPIRE', reservationKey, expireTime)
 
     -- Registra a mensagem como processada
@@ -70,6 +70,7 @@ async function processStreamRequests(eventoId, userId, quantidade, idRequest, lo
 
         if (result === 1) {
             console.log(`Reserva realizada para o usuário ${userId} do evento ${eventoId} com ${quantidade} ingressos.`);
+            // Notificar usuário que sua reserva foi realizada e ele tem 10 minutos para efetuar o pagamento.
         } else if (result === 0) {
             console.log(`Ingressos insuficientes. Reserva adicionada à fila de espera.`);
         }

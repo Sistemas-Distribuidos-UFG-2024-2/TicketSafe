@@ -44,7 +44,7 @@ if request then
         local reservationKey = 'reserva:' .. eventId .. ':' .. userId .. ':' .. timestamp .. ':' .. requestedQuantity
 
         -- Salva a reserva no Redis
-        redis.call('HSET', reservationKey, 'dummy', '')
+        redis.call('HSET', reservationKey, 'pagamento_efetuado', 'false')
         redis.call('EXPIRE', reservationKey, 600)  -- Expira em 10 minutos
 
         -- Retorna sucesso

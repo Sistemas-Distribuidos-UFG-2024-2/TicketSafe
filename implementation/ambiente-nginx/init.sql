@@ -5,14 +5,16 @@ CREATE TABLE IF NOT EXISTS public.ingressos (
     nome character varying(50)
 );
 
--- Criação da tabela reservas
+-- Criação da tabela reservas com restrição de unicidade para (evento_id, user_id, "timestamp")
 CREATE TABLE IF NOT EXISTS public.reservas (
     id SERIAL PRIMARY KEY,
     evento_id integer NOT NULL,
     user_id uuid NOT NULL,
     quantidade integer NOT NULL,
     "timestamp" bigint NOT NULL,
-    pagamento_efetuado boolean NOT NULL
+    pagamento_efetuado boolean NOT NULL,
+    data_pagamento bigint NOT NULL,
+    CONSTRAINT unique_evento_user_timestamp UNIQUE (evento_id, user_id, "timestamp")
 );
 
 -- Criação da tabela usuarios
