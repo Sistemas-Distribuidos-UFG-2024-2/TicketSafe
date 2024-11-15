@@ -119,6 +119,14 @@ Para configurar o ambiente de desenvolvimento do TicketSafe, siga estas etapas:
     "userId": "cec44660-96c6-4d9b-b97e-05f42b27a925"
 }'
 ```
+- **Comando curl rota GET /ingressos/consultar:**
+```
+curl --location --request GET 'http://localhost/ingressos/consultar' \
+--header 'Content-Type: application/json' \
+--data '{
+    "reservaId":"1731693419985-0"
+}'
+```
 - **Comando curl rota POST /ingressos/cancelar:**
 ```
    curl --location 'http://localhost/ingressos/cancelar' \

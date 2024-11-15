@@ -31,10 +31,11 @@ function startServer() {
 
     try {
       // publica uma mensagem ou requisição no canal de STREAM para os workers disponiveis
-      await redisClient.xadd('reservas_pendentes', '*', 'eventoId', eventoId, 'userId', userId, 'quantidade', quantidade);
+      const result = await redisClient.xadd('reservas_pendentes', '*', 'eventoId', eventoId, 'userId', userId, 'quantidade', quantidade);
 
       res.status(200).send({
-        message: 'Ordem de reserva realizada, você está na nossa fila de reservas e será notificado quando ela for efetuada!'
+        message: 'Ordem de reserva realizada, você está na nossa fila de reservas e será notificado quando ela for efetuada!',
+        reserve_order_id: result
       });
     } catch (err) {
       console.error('Erro ao processar a reserva:', err);
@@ -42,6 +43,33 @@ function startServer() {
     }
   });
 
+// Endpoint para consultar uma reserva específica no stream
+app.get('/ingressos/consultar', async (req, res) => {
+  const { reservaId } = req.body;
+
+  if (!reservaId) {
+    return res.status(400).send({ message: 'ID da reserva é obrigatório' });
+  }
+
+  try {
+    // Usa XRANGE para buscar a entrada no stream 'reservas_pendentes' com o ID específico
+    const result = await redisClient.xrange('reservas_pendentes', reservaId, reservaId);
+
+    if (result.length > 0) {
+      // Retorna os detalhes da reserva encontrada
+      res.status(200).send({
+        message: `A reserva com ID ${reservaId} foi encontrada.`,
+        data: result[0]
+      });
+    } else {
+      // Se não houver resultado, retorna que a reserva não foi encontrada
+      res.status(404).send({ message: `A reserva com ID ${reservaId} não foi encontrada no stream de reservas pendentes.` });
+    }
+  } catch (err) {
+    console.error('Erro ao consultar o stream de reservas:', err);
+    res.status(500).send({ message: 'Erro ao consultar o stream de reservas' });
+  }
+});
 
 // Endpoint para cancelar uma reserva
 app.post('/ingressos/cancelar', async (req, res) => {
