@@ -79,6 +79,7 @@ async function processStreamRequests(eventoId, userId, quantidade, idRequest, lo
         console.log(`Falha ao tentar reservar o ingresso, tente novamente mais tarde!`);
     }
 }
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 async function callProcessStream(idRequest, fields, lockKey) {
     const eventoId = fields[fields.indexOf('eventoId') + 1];
@@ -98,15 +99,17 @@ const listenToStream = async () => {
                 console.error('Erro ao criar o grupo de consumidores:', err);
             }
         }
+        let messagesClaimed = true;
 
-        while (true) {
+        while (messagesClaimed) {
             const autoclaimResult = await redisClient.xautoclaim(
                 streamKey, groupName, consumerName, 43200000, '0-0', 'COUNT', 1
             );
 
             const [, claimedMessages] = autoclaimResult || [];
+            messagesClaimed = claimedMessages && claimedMessages.length > 0;
 
-            if (claimedMessages && claimedMessages.length > 0) {
+            if (messagesClaimed) {
                 for (const [idRequest, fields] of claimedMessages) {
                     const lockKey = `lock:${idRequest}`;
                     //lock distribuido
@@ -119,27 +122,32 @@ const listenToStream = async () => {
                     }
                 }
             } else {
-                const result = await redisClient.xreadgroup(
-                    'GROUP', groupName, consumerName,
-                    'COUNT', 1,
-                    'STREAMS', streamKey, '>'
-                );
+                console.log("Sem mensagens a recuperar, prosseguindo para leitura de novas mensagens!")
+            }
+        }
+        while (true){
+            const result = await redisClient.xreadgroup(
+                'GROUP', groupName, consumerName,
+                'COUNT', 1,
+                'BLOCK', 5000, // Bloqueia por até 5 segundos aguardando novas mensagens, prossegue assim que uma mensagem chega pra ele
+                'STREAMS', streamKey, '>'
+            );
+            if (result && result.length > 0) {
+                for (const [stream, messages] of result) {
+                    for (const [idRequest, fields] of messages) {
+                        const lockKey = `lock:${idRequest}`;
 
-                if (result && result.length > 0) {
-                    for (const [stream, messages] of result) {
-                        for (const [idRequest, fields] of messages) {
-                            const lockKey = `lock:${idRequest}`;
-
-                            const lockAcquired = await redisClient.set(lockKey, idRequest, 'NX', 'EX', lockTTL);
-        
-                            if (lockAcquired) {
-                                await callProcessStream(idRequest, fields, lockKey);
-                            } else {
-                                console.log(`O item ${idRequest} já está sendo processado.`);
-                            }
+                        const lockAcquired = await redisClient.set(lockKey, idRequest, 'NX', 'EX', lockTTL);
+    
+                        if (lockAcquired) {
+                            await callProcessStream(idRequest, fields, lockKey);
+                        } else {
+                            console.log(`O item ${idRequest} já está sendo processado.`);
                         }
                     }
                 }
+            } else {
+                await sleep(1000); // Espera 1 segundo antes de tentar novamente
             }
         }
     } catch (error) {
