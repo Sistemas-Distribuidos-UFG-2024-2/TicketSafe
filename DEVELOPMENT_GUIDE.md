@@ -204,10 +204,6 @@ curl --location --request GET 'http://localhost/ingressos/consultar' \
 
 * **Nginx**: Para fazer o proxy das requisições e balancear no modo padrão round-robin para os containeres ativos.
 
-   ### Diagrama da Arquitetura
-  
-![architecture_diagram_v3](https://github.com/user-attachments/assets/94ed1cff-5dee-41d2-9a0f-06cb527ed844)
-
 ## Referências para Estudo
 
    Aqui estão algumas referências úteis para aprofundar o conhecimento nas tecnologias utilizadas no projeto:  
