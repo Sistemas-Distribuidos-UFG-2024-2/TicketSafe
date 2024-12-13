@@ -43,7 +43,7 @@ Para configurar o ambiente de desenvolvimento do TicketSafe, siga estas etapas:
 **A declaração dos serviços no docker-compose inclui uma sessão `deploy:resources` para limitação de utilização de CPU e MEMÓRIA, a fim de controlar as simulações de teste de carga e escalonamento manual de serviços.**
 
 **Rotas:**
-```A solução possui 4 serviços expostos via ENDPOINTS para os usuários que são```:
+```A solução possui 4 serviços expostos via ENDPOINTS para os clientes que são```:
 
 ### **auth_service:**
 - **Comando curl rota POST /auth/cadastrar:**
@@ -195,6 +195,7 @@ curl --location --request GET 'http://localhost/ingressos/consultar' \
 * Node JS
 * Docker
 * Gatling (java 17)
+* Apache JMetter
 
   ### Frontend
 
@@ -214,3 +215,4 @@ curl --location --request GET 'http://localhost/ingressos/consultar' \
 * [NodeJs](https://nodejs.org/pt)
 * [Docker](https://www.docker.com/)
 * [Gatling](https://gatling.io/open-source/)
+* [JMetter](https://jmeter.apache.org)
