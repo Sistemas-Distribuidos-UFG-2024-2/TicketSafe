@@ -197,10 +197,6 @@ curl --location --request GET 'http://localhost/ingressos/consultar' \
 * Gatling (java 17)
 * Apache JMetter
 
-  ### Frontend
-
-* 
-
    ### Orquestração e Implantação
 
 * **Nginx**: Para fazer o proxy das requisições e balancear no modo padrão round-robin para os containeres ativos.
