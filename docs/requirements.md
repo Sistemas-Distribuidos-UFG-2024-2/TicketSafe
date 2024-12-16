@@ -29,13 +29,13 @@ O sistema oferece as seguintes funcionalidades principais:
 * Reserva de ingressos para diferentes categorias de usuários.  
 * Gestão de eventos por parte dos organizadores (criação de eventos, gerenciamento de ingressos, etc.).  
 * Notificações em tempo real para usuários (confirmações de compra, lembretes de eventos, etc.).  
-* Sistema de backup e recuperação distribuídos.  
+* Sistema de backup e recuperação distribuídos utilizando REDIS.
 * Funcionalidades de escalabilidade e alta disponibilidade.
 
 
 2.3 *Definições, Acrônimos e Abreviações*
 
-* Redis: Sistema de armazenamento em estrutura de dados em memória, usado para gerenciamento de filas e caching
+* Redis: Sistema de armazenamento em estrutura de dados em memória, usado para gerenciamento de filas e caching.
 
 
 #### 
@@ -46,9 +46,8 @@ O sistema será construído com uma arquitetura de microsserviços, utilizando t
 
 * **Microsserviços**: Cada funcionalidade (venda, reserva, gerenciamento) será desenvolvida como um serviço independente, facilitando a manutenção e o desenvolvimento ágil.  
 * **Redis para Filas**: Redis será utilizado para gerenciar filas de tarefas assíncronas e distribuição de carga entre os microsserviços, melhorando a eficiência do sistema.  
-* **Escalonamento Automático**: O sistema será projetado para escalar automaticamente, utilizando um orquestrador como o Kubernetes para gerenciar instâncias de microsserviços conforme a demanda.  
-* **Notificações em Tempo Real**: Utilizando WebSockets ou Server-Sent Events (SSE) para fornecer atualizações instantâneas aos usuários sobre o status de suas compras e reservas.  
-* **Backup e Recuperação Simples**: Implementação de um sistema de backup básico para garantir a integridade dos dados e a recuperação em caso de falha.
+* **Notificações em Tempo Real**: Utilizando Canais de PUB/SUB do Redis para fornecer atualizações instantâneas aos usuários sobre o status de suas compras e reservas.  
+* **Backup e Recuperação Simples**: RDB combinado com AOF (append only file), além de um banco POSTGRESQL durável para armazenamento de reservas confirmadas.
 
 
 #### **4\. Requisitos Funcionais**
@@ -63,7 +62,7 @@ O sistema será construído com uma arquitetura de microsserviços, utilizando t
 
 4.2 *Reserva de Ingressos*
 
-* **RF005**: O sistema deve permitir que os usuários reservem ingressos para eventos, mantendo as reservas válidas por um tempo específico.  
+* **RF005**: O sistema deve permitir que os usuários reservem ingressos para eventos, mantendo as reservas válidas por um tempo específico (10 minutos).
 * **RF006**: O sistema deve notificar os usuários sobre o status de suas reservas (confirmação, expiração, etc.).
 
 
@@ -90,7 +89,6 @@ O sistema será construído com uma arquitetura de microsserviços, utilizando t
 5.1 *Escalabilidade*
 
 * **RNF001**: O sistema deve ser capaz de suportar milhares de usuários simultâneos.  
-* **RNF002**: O escalonamento automático deve garantir que o sistema possa aumentar ou reduzir a quantidade de recursos com base na demanda.
 
 
 5.2 *Disponibilidade*
@@ -135,56 +133,37 @@ O sistema será construído com uma arquitetura de microsserviços, utilizando t
 6.1 *Arquitetura Baseada em Microsserviços*
 
 * O sistema será desenvolvido utilizando arquitetura de microsserviços. Cada serviço será responsável por um conjunto específico de funcionalidades, como:  
-  * Serviço de pagamento.  
-  * Serviço de notificações.  
-  * Serviço de gerenciamento de eventos.  
-  * Serviço de vendas e reservas de ingressos.  
+  * Serviço de reservas.
+  * Serviço de eventos
+  * Serviço de pagamento
+  * Serviço Redis.
+  * Serviço Postgresql.
+  * Serviço Worker Save Reserve.
+  * Serviço Worker Reserve Waiting.
+  * Serviço Worker Cancel.
+  * Serviço Worker Confirm.
 * Esses serviços serão independentes, facilitando a escalabilidade, manutenção e atualização do sistema.
 
 
-6.2 *Escalonamento Automático*
+6.2 *Filas de Mensagens*
 
-* O sistema deve utilizar ferramentas de orquestração de contêineres, como Kubernetes, para escalar automaticamente os microsserviços com base na demanda.  
-* O escalonamento será monitorado com base em métricas de uso de CPU e memória, utilizando ferramentas como Prometheus para coletar dados de desempenho.
-
-
-6.3 *Filas de Mensagens*
-
-* O Redis será utilizado como sistema de filas de mensagens para orquestrar as comunicações entre microsserviços, garantindo baixa latência na troca de mensagens e no processamento de tarefas críticas, como a compra e reserva de ingressos.  
-* A fila de Redis será utilizada para balancear a carga de requisições de usuários, evitando sobrecarga de um único serviço.
+* O Redis será utilizado como sistema de broker em memória (Redis Stream) para orquestrar as comunicações entre microsserviços, garantindo baixa latência na troca de mensagens e no processamento de tarefas críticas, como a compra e reserva de ingressos.  
 
 
-6.4 *Monitoramento de Carga*
+6.3 *Notificações em Tempo Real*
 
-* O sistema utilizará ferramentas como **Prometheus** e **Grafana** para monitoramento em tempo real do uso de recursos (CPU, memória, etc.).  
-* Um monitor de carga será implementado para detectar picos de demanda e acionar o escalonamento automático.
-
-
-6.5 *Notificações em Tempo Real*
-
-* **WebSockets** e **Server-Sent Events (SSE)** serão utilizados para implementar notificações em tempo real para os usuários. Isso permitirá que as atualizações sejam enviadas diretamente para os usuários sem a necessidade de atualizações manuais.
+* Redis PUB/SUB será utilizado para implementar notificações em tempo real para os usuários. Isso permitirá que as atualizações sejam enviadas diretamente para os usuários sem a necessidade de atualizações manuais.
 
 
-6.6 *Backup e Recuperação Distribuídos*
+6.4 *Backup e Recuperação Distribuídos*
 
-* O sistema implementará backups distribuídos de dados críticos (transações, ingressos, informações de usuários) utilizando soluções como **Amazon S3 Glacier** ou **Ceph**.  
+* O sistema implementará backups do próprio Redis como RDB e AOF, além de salvar informações de reservas confirmadas em um banco relacional durável como POSTGRESQL.
 * Snapshots regulares serão realizados e replicados em várias regiões para garantir a recuperação rápida em caso de falhas.
 
 
-6.7 *Balanceamento de Carga*
+6.5 *Balanceamento de Carga*
 
 * O sistema utilizará algoritmos de balanceamento de carga, como **Round Robin** ou **Least Connections**, para distribuir requisições entre servidores, garantindo que o sistema suporte alta demanda.
-
-
-6.8 *Replicação de Dados*
-
-* O sistema implementará replicação de dados em um banco de dados distribuído, como **MongoDB** ou **Cassandra**, garantindo alta disponibilidade e resiliência.
-
-
-6.9 *Criptografia*
-
-* O sistema implementará criptografia **AES** para proteger dados sensíveis e usará **HTTPS** para garantir a segurança nas comunicações entre o cliente e o servidor.
-
 
 
 #### **7\. Considerações sobre Sistemas Distribuídos**
